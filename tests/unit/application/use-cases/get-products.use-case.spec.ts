@@ -19,6 +19,7 @@ describe('GetProductsUseCase', () => {
         ]),
       ),
       findById: jest.fn(),
+      decrementStock: jest.fn(),
     };
 
     const useCase = new GetProductsUseCase(repo);
@@ -36,6 +37,7 @@ describe('GetProductsUseCase', () => {
           err({ code: 'PERSISTENCE_ERROR', message: 'db error' }),
         ),
       findById: jest.fn(),
+      decrementStock: jest.fn(),
     };
 
     const useCase = new GetProductsUseCase(repo);

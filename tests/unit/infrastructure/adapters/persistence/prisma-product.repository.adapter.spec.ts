@@ -5,6 +5,7 @@ describe('PrismaProductRepositoryAdapter', () => {
     product: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      updateMany: jest.fn(),
     },
   } as any;
 
@@ -64,5 +65,39 @@ describe('PrismaProductRepositoryAdapter', () => {
     const result = await adapter.findById('p1');
 
     expect(result.isOk()).toBe(true);
+  });
+
+  it('decrements stock when enough units are available', async () => {
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await adapter.decrementStock('p1', 1);
+
+    expect(result.isOk()).toBe(true);
+    expect(prisma.product.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'p1',
+        stock: {
+          gte: 1,
+        },
+      },
+      data: {
+        stock: {
+          decrement: 1,
+        },
+      },
+    });
+  });
+
+  it('returns OUT_OF_STOCK when no rows are updated', async () => {
+    prisma.product.updateMany.mockResolvedValue({ count: 0 });
+
+    const result = await adapter.decrementStock('p1', 2);
+    const error = result.match(
+      () => null,
+      (value) => value,
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(error?.code).toBe('OUT_OF_STOCK');
   });
 });

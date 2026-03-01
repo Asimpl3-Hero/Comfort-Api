@@ -4,6 +4,7 @@ import { AppError } from '../../../shared/errors/app-error';
 const STATUS_BY_CODE: Record<AppError['code'], HttpStatus> = {
   VALIDATION_ERROR: HttpStatus.BAD_REQUEST,
   PRODUCT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  OUT_OF_STOCK: HttpStatus.CONFLICT,
   ORDER_NOT_FOUND: HttpStatus.NOT_FOUND,
   PAYMENT_PROVIDER_ERROR: HttpStatus.BAD_GATEWAY,
   PERSISTENCE_ERROR: HttpStatus.INTERNAL_SERVER_ERROR,

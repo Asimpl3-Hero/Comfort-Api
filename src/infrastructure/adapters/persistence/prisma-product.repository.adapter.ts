@@ -64,4 +64,40 @@ export class PrismaProductRepositoryAdapter implements ProductRepositoryPort {
       });
     }
   }
+
+  public async decrementStock(
+    productId: string,
+    units: number,
+  ): Promise<Result<void, AppError>> {
+    try {
+      const updated = await this.prisma.product.updateMany({
+        where: {
+          id: productId,
+          stock: {
+            gte: units,
+          },
+        },
+        data: {
+          stock: {
+            decrement: units,
+          },
+        },
+      });
+
+      if (updated.count === 0) {
+        return err({
+          code: 'OUT_OF_STOCK',
+          message: `Product ${productId} does not have enough stock.`,
+        });
+      }
+
+      return ok(undefined);
+    } catch (cause) {
+      return err({
+        code: 'PERSISTENCE_ERROR',
+        message: 'Failed to decrement product stock.',
+        details: cause,
+      });
+    }
+  }
 }

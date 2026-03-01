@@ -19,6 +19,7 @@ describe('ProductsController (e2e)', () => {
   const productRepositoryMock: jest.Mocked<ProductRepositoryPort> = {
     findAll: jest.fn(),
     findById: jest.fn(),
+    decrementStock: jest.fn(),
   };
   const orderRepositoryMock: jest.Mocked<OrderRepositoryPort> = {
     createPending: jest.fn(),

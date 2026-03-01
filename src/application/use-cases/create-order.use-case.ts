@@ -66,6 +66,13 @@ export class CreateOrderUseCase {
     }
     const product = (productOrNotFound as Ok<Product>).value;
 
+    if (product.stock <= 0) {
+      return err({
+        code: 'OUT_OF_STOCK',
+        message: `Product ${product.id} is out of stock.`,
+      });
+    }
+
     const moneyResult = Money.create(product.priceInCents, product.currency);
     if (moneyResult.isErr()) {
       return moneyResult;

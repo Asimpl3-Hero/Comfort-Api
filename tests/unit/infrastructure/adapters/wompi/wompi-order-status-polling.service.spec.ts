@@ -1,5 +1,6 @@
 import type { OrderRepositoryPort } from '../../../../../src/domain/ports/order-repository.port';
 import type { PaymentGatewayPort } from '../../../../../src/domain/ports/payment-gateway.port';
+import type { ProductRepositoryPort } from '../../../../../src/domain/ports/product-repository.port';
 import { WompiOrderStatusPollingService } from '../../../../../src/infrastructure/adapters/wompi/wompi-order-status-polling.service';
 import { err, ok } from '../../../../../src/shared/railway/result';
 
@@ -16,6 +17,12 @@ describe('WompiOrderStatusPollingService', () => {
     getTransactionStatus: jest.fn(),
   });
 
+  const buildProductRepository = (): jest.Mocked<ProductRepositoryPort> => ({
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    decrementStock: jest.fn().mockResolvedValue(ok(undefined)),
+  });
+
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
@@ -29,6 +36,7 @@ describe('WompiOrderStatusPollingService', () => {
   it('updates order to APPROVED when gateway approves payment', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus.mockResolvedValue(
       ok({ providerStatus: 'APPROVED', orderStatus: 'APPROVED' }),
     );
@@ -43,9 +51,11 @@ describe('WompiOrderStatusPollingService', () => {
         createdAt: new Date(),
       }),
     );
+    productRepository.decrementStock.mockResolvedValue(ok(undefined));
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
     await service.start('o1', 'tx1');
@@ -53,11 +63,13 @@ describe('WompiOrderStatusPollingService', () => {
     await jest.advanceTimersByTimeAsync(5000);
 
     expect(orderRepository.updateStatus).toHaveBeenCalledWith('o1', 'APPROVED');
+    expect(productRepository.decrementStock).toHaveBeenCalledWith('p1', 1);
   });
 
   it('marks order as DECLINED when timeout is reached', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus.mockResolvedValue(
       ok({ providerStatus: 'PENDING', orderStatus: 'PENDING' }),
     );
@@ -75,6 +87,7 @@ describe('WompiOrderStatusPollingService', () => {
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
     await service.start('o1', 'tx1');
@@ -87,6 +100,7 @@ describe('WompiOrderStatusPollingService', () => {
   it('does not duplicate pollers for the same order id', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus.mockResolvedValue(
       ok({ providerStatus: 'APPROVED', orderStatus: 'APPROVED' }),
     );
@@ -104,6 +118,7 @@ describe('WompiOrderStatusPollingService', () => {
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
 
@@ -117,6 +132,7 @@ describe('WompiOrderStatusPollingService', () => {
   it('retries polling when gateway status check fails', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus
       .mockResolvedValueOnce(
         err({ code: 'PAYMENT_PROVIDER_ERROR', message: 'temporary error' }),
@@ -138,6 +154,7 @@ describe('WompiOrderStatusPollingService', () => {
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
     await service.start('o1', 'tx1');
@@ -151,12 +168,14 @@ describe('WompiOrderStatusPollingService', () => {
   it('handles pending-order rehydration failure gracefully', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     orderRepository.findPending.mockResolvedValue(
       err({ code: 'PERSISTENCE_ERROR', message: 'db failed' }),
     );
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
 
@@ -167,6 +186,7 @@ describe('WompiOrderStatusPollingService', () => {
   it('rehydrates pending orders on module init', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
     orderRepository.findPending.mockResolvedValue(
       ok([
         {
@@ -197,6 +217,7 @@ describe('WompiOrderStatusPollingService', () => {
 
     const service = new WompiOrderStatusPollingService(
       orderRepository,
+      productRepository,
       paymentGateway,
     );
 

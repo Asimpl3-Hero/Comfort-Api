@@ -30,6 +30,7 @@ describe('CreateOrderUseCase', () => {
     const productRepository: jest.Mocked<ProductRepositoryPort> = {
       findAll: jest.fn(),
       findById: jest.fn(),
+      decrementStock: jest.fn(),
     };
 
     const orderRepository: jest.Mocked<OrderRepositoryPort> = {
@@ -165,6 +166,30 @@ describe('CreateOrderUseCase', () => {
     });
 
     expect(result.isErr()).toBe(true);
+    expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns OUT_OF_STOCK when product stock is zero', async () => {
+    const { useCase, productRepository, paymentGateway } = createMocks();
+
+    productRepository.findById.mockResolvedValue(
+      ok({
+        ...baseProduct,
+        stock: 0,
+      }),
+    );
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+    });
+
+    const error = result.match(
+      () => null,
+      (value) => value,
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(error?.code).toBe('OUT_OF_STOCK');
     expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
   });
 });

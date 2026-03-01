@@ -28,6 +28,22 @@ export class InMemoryProductRepository implements ProductRepositoryPort {
   public async findById(id: string): Promise<Result<Product | null, AppError>> {
     return ok(this.products.find((product) => product.id === id) ?? null);
   }
+
+  public async decrementStock(
+    productId: string,
+    units: number,
+  ): Promise<Result<void, AppError>> {
+    const product = this.products.find((item) => item.id === productId);
+    if (!product || product.stock < units) {
+      return err({
+        code: 'OUT_OF_STOCK',
+        message: `Product ${productId} does not have enough stock.`,
+      });
+    }
+
+    product.stock -= units;
+    return ok(undefined);
+  }
 }
 
 export class InMemoryOrderRepository implements OrderRepositoryPort {
