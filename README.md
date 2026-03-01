@@ -252,3 +252,27 @@ npm run start:dev
 ```bash
 npm run test
 ```
+
+## 12. Run with Docker
+
+1. Build and start PostgreSQL + API:
+
+```bash
+docker compose up --build -d
+```
+
+2. Seed dummy products (optional, one-shot service):
+
+```bash
+docker compose --profile seed run --rm seed
+```
+
+3. Check API health manually:
+
+```bash
+curl http://localhost:3000/products
+```
+
+Notes:
+- The API container runs Prisma `generate` + `db push` on startup.
+- In Docker, `DATABASE_URL` is overridden to use host `db` from compose.

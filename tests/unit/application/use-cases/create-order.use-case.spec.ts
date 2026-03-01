@@ -118,7 +118,14 @@ describe('CreateOrderUseCase', () => {
       checkoutUrl: 'https://checkout.wompi.co/p/?reference=abc',
       status: 'PENDING',
     });
-    expect(paymentGateway.createTransaction).toHaveBeenCalledTimes(1);
+    expect(paymentGateway.createTransaction).toHaveBeenCalledWith({
+      orderReference: expect.any(String),
+      amountInCents: baseProduct.priceInCents,
+      currency: baseProduct.currency,
+      paymentMethod: {
+        type: 'CARD',
+      },
+    });
     expect(orderRepository.createPending).toHaveBeenCalledWith({
       productId: baseProduct.id,
       amountInCents: baseProduct.priceInCents,
@@ -191,5 +198,45 @@ describe('CreateOrderUseCase', () => {
     expect(result.isErr()).toBe(true);
     expect(error?.code).toBe('OUT_OF_STOCK');
     expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it('sends NEQUI method when requested', async () => {
+    const {
+      useCase,
+      productRepository,
+      orderRepository,
+      paymentGateway,
+      pollingService,
+    } = createMocks();
+
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+    paymentGateway.createTransaction.mockResolvedValue(
+      ok({
+        transactionId: baseOrder.wompiTransactionId,
+        checkoutUrl: null,
+        providerStatus: 'PENDING',
+      }),
+    );
+    orderRepository.createPending.mockResolvedValue(ok(baseOrder));
+    pollingService.start.mockResolvedValue(ok(undefined));
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+      paymentMethodType: 'NEQUI',
+      paymentMethodData: {
+        phoneNumber: '3991111111',
+      },
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(paymentGateway.createTransaction).toHaveBeenCalledWith({
+      orderReference: expect.any(String),
+      amountInCents: baseProduct.priceInCents,
+      currency: baseProduct.currency,
+      paymentMethod: {
+        type: 'NEQUI',
+        phoneNumber: '3991111111',
+      },
+    });
   });
 });

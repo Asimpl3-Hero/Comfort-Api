@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type {
   CreatedWompiTransaction,
   CreateWompiTransactionInput,
+  PaymentMethodInput,
   PaymentGatewayPort,
   WompiTransactionStatus,
 } from '../../../domain/ports/payment-gateway.port';
@@ -15,6 +16,11 @@ interface WompiCreateTransactionResponse {
     id?: string;
     status?: string;
     checkout_url?: string;
+    payment_method?: {
+      extra?: {
+        async_payment_url?: string;
+      };
+    };
   };
 }
 
@@ -40,11 +46,7 @@ export class WompiAdapter implements PaymentGatewayPort {
       customer_email: this.appConfigService.wompiCustomerEmail,
       reference: input.orderReference,
       acceptance_token: this.appConfigService.wompiAcceptanceToken,
-      payment_method: {
-        type: 'CARD',
-        token: this.appConfigService.wompiSandboxCardToken,
-        installments: 1,
-      },
+      payment_method: this.mapPaymentMethod(input.paymentMethod),
     };
 
     const responseResult =
@@ -69,21 +71,50 @@ export class WompiAdapter implements PaymentGatewayPort {
       });
     }
 
-    const checkoutUrl = responseData.data?.checkout_url;
-    if (!checkoutUrl) {
-      return err({
-        code: 'PAYMENT_PROVIDER_ERROR',
-        message:
-          'Wompi did not return a checkout_url. The payment flow is not usable.',
-        details: responseData,
-      });
-    }
+    const checkoutUrl =
+      responseData.data?.checkout_url ??
+      responseData.data?.payment_method?.extra?.async_payment_url ??
+      null;
 
     return ok({
       transactionId,
       checkoutUrl,
       providerStatus,
     });
+  }
+
+  private mapPaymentMethod(input: PaymentMethodInput): Record<string, unknown> {
+    if (input.type === 'CARD') {
+      return {
+        type: 'CARD',
+        token: this.appConfigService.wompiSandboxCardToken,
+        installments: 1,
+      };
+    }
+
+    if (input.type === 'NEQUI') {
+      return {
+        type: 'NEQUI',
+        phone_number: input.phoneNumber,
+      };
+    }
+
+    if (input.type === 'PSE') {
+      return {
+        type: 'PSE',
+        user_type: input.userType,
+        user_legal_id_type: input.userLegalIdType,
+        user_legal_id: input.userLegalId,
+        financial_institution_code: input.financialInstitutionCode,
+        payment_description: input.paymentDescription,
+      };
+    }
+
+    return {
+      type: 'BANCOLOMBIA_TRANSFER',
+      payment_description: input.paymentDescription,
+      ...(input.sandboxStatus ? { sandbox_status: input.sandboxStatus } : {}),
+    };
   }
 
   public async getTransactionStatus(

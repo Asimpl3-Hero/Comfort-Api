@@ -34,6 +34,9 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      paymentMethod: {
+        type: 'CARD',
+      },
     });
 
     expect(result.isOk()).toBe(true);
@@ -49,12 +52,15 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      paymentMethod: {
+        type: 'CARD',
+      },
     });
 
     expect(result.isErr()).toBe(true);
   });
 
-  it('returns PAYMENT_PROVIDER_ERROR when checkout_url is missing', async () => {
+  it('allows null checkoutUrl when provider does not return redirect URLs', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ data: { id: 'tx1', status: 'PENDING' } }),
@@ -64,9 +70,17 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      paymentMethod: {
+        type: 'CARD',
+      },
     });
 
-    expect(result.isErr()).toBe(true);
+    expect(result.isOk()).toBe(true);
+    const value = result.match(
+      (okValue) => okValue,
+      () => null,
+    );
+    expect(value?.checkoutUrl).toBeNull();
   });
 
   it('maps transaction status to domain order status', async () => {
@@ -98,5 +112,30 @@ describe('WompiAdapter', () => {
     const result = await adapter.getTransactionStatus('tx1');
 
     expect(result.isErr()).toBe(true);
+  });
+
+  it('maps NEQUI payload in direct integration', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 'tx-nequi', status: 'PENDING' } }),
+    } as Response);
+
+    const result = await adapter.createTransaction({
+      orderReference: 'ref-nequi',
+      amountInCents: 1000,
+      currency: 'COP',
+      paymentMethod: {
+        type: 'NEQUI',
+        phoneNumber: '3991111111',
+      },
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"type":"NEQUI"'),
+      }),
+    );
   });
 });

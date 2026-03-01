@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: comfort-api-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: comfort_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - comfort_api_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d comfort_api']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comfort-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/comfort_api?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comfort-api-seed
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/comfort_api?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ['npm', 'run', 'prisma:seed']
+    profiles: ['seed']
+
+volumes:
+  comfort_api_pgdata:
