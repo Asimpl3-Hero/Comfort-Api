@@ -12,6 +12,7 @@ model Product {
   name         String
   description  String
   priceInCents Int      @map("price_in_cents")
+  stock        Int      @default(0)
   currency     String
   createdAt    DateTime @default(now()) @map("created_at")
   orders       Order[]

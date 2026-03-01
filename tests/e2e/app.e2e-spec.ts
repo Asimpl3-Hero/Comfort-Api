@@ -2,17 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
-import { PRODUCT_REPOSITORY_PORT } from '../src/domain/ports/product-repository.port';
-import { ORDER_REPOSITORY_PORT } from '../src/domain/ports/order-repository.port';
-import { PAYMENT_GATEWAY_PORT } from '../src/domain/ports/payment-gateway.port';
-import { ORDER_STATUS_POLLING_PORT } from '../src/domain/ports/order-status-polling.port';
-import type { ProductRepositoryPort } from '../src/domain/ports/product-repository.port';
-import type { OrderRepositoryPort } from '../src/domain/ports/order-repository.port';
-import type { PaymentGatewayPort } from '../src/domain/ports/payment-gateway.port';
-import type { OrderStatusPollingPort } from '../src/domain/ports/order-status-polling.port';
-import { PrismaService } from '../src/infrastructure/adapters/persistence/prisma.service';
-import { ok } from '../src/shared/railway/result';
+import { AppModule } from '../../src/app.module';
+import { PRODUCT_REPOSITORY_PORT } from '../../src/domain/ports/product-repository.port';
+import { ORDER_REPOSITORY_PORT } from '../../src/domain/ports/order-repository.port';
+import { PAYMENT_GATEWAY_PORT } from '../../src/domain/ports/payment-gateway.port';
+import { ORDER_STATUS_POLLING_PORT } from '../../src/domain/ports/order-status-polling.port';
+import type { ProductRepositoryPort } from '../../src/domain/ports/product-repository.port';
+import type { OrderRepositoryPort } from '../../src/domain/ports/order-repository.port';
+import type { PaymentGatewayPort } from '../../src/domain/ports/payment-gateway.port';
+import type { OrderStatusPollingPort } from '../../src/domain/ports/order-status-polling.port';
+import { PrismaService } from '../../src/infrastructure/adapters/persistence/prisma.service';
+import { ok } from '../../src/shared/railway/result';
 
 describe('ProductsController (e2e)', () => {
   let app: INestApplication<App>;
@@ -46,6 +46,7 @@ describe('ProductsController (e2e)', () => {
           name: 'Mock Product',
           description: 'Mocked for e2e',
           priceInCents: 10000,
+          stock: 4,
           currency: 'COP',
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
         },
@@ -98,6 +99,7 @@ describe('ProductsController (e2e)', () => {
           name: 'Mock Product',
           description: 'Mocked for e2e',
           price_in_cents: 10000,
+          stock: 4,
           currency: 'COP',
           created_at: '2026-01-01T00:00:00.000Z',
         },

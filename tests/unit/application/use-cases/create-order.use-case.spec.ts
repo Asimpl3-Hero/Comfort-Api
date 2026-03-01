@@ -1,9 +1,9 @@
-import { CreateOrderUseCase } from './create-order.use-case';
-import type { ProductRepositoryPort } from '../../domain/ports/product-repository.port';
-import type { OrderRepositoryPort } from '../../domain/ports/order-repository.port';
-import type { PaymentGatewayPort } from '../../domain/ports/payment-gateway.port';
-import type { OrderStatusPollingPort } from '../../domain/ports/order-status-polling.port';
-import { err, ok } from '../../shared/railway/result';
+import { CreateOrderUseCase } from '../../../../src/application/use-cases/create-order.use-case';
+import type { ProductRepositoryPort } from '../../../../src/domain/ports/product-repository.port';
+import type { OrderRepositoryPort } from '../../../../src/domain/ports/order-repository.port';
+import type { PaymentGatewayPort } from '../../../../src/domain/ports/payment-gateway.port';
+import type { OrderStatusPollingPort } from '../../../../src/domain/ports/order-status-polling.port';
+import { err, ok } from '../../../../src/shared/railway/result';
 
 describe('CreateOrderUseCase', () => {
   const baseProduct = {
@@ -11,6 +11,7 @@ describe('CreateOrderUseCase', () => {
     name: 'Test Product',
     description: 'Test product description',
     priceInCents: 15000,
+    stock: 20,
     currency: 'COP',
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -147,5 +148,23 @@ describe('CreateOrderUseCase', () => {
 
     expect(result.isErr()).toBe(true);
     expect(orderRepository.createPending).not.toHaveBeenCalled();
+  });
+
+  it('returns VALIDATION_ERROR when product has invalid amount', async () => {
+    const { useCase, productRepository, paymentGateway } = createMocks();
+
+    productRepository.findById.mockResolvedValue(
+      ok({
+        ...baseProduct,
+        priceInCents: 0,
+      }),
+    );
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
   });
 });

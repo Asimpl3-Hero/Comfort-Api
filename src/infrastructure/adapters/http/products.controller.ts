@@ -17,6 +17,7 @@ export class ProductsController {
           name: product.name,
           description: product.description,
           price_in_cents: product.priceInCents,
+          stock: product.stock,
           currency: product.currency,
           created_at: product.createdAt,
         })),

@@ -23,6 +23,7 @@ export class PrismaProductRepositoryAdapter implements ProductRepositoryPort {
           name: product.name,
           description: product.description,
           priceInCents: product.priceInCents,
+          stock: product.stock,
           currency: product.currency,
           createdAt: product.createdAt,
         })),
@@ -51,6 +52,7 @@ export class PrismaProductRepositoryAdapter implements ProductRepositoryPort {
         name: product.name,
         description: product.description,
         priceInCents: product.priceInCents,
+        stock: product.stock,
         currency: product.currency,
         createdAt: product.createdAt,
       });
