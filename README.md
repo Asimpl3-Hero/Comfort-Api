@@ -190,6 +190,10 @@ Use `.env.example` as template:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/comfort_api?schema=public"
+NODE_ENV="development"
+FORCE_HTTPS="false"
+RATE_LIMIT_WINDOW_MS="60000"
+RATE_LIMIT_MAX_REQUESTS="120"
 WOMPI_BASE_URL="https://api-sandbox.co.uat.wompi.dev/v1"
 WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
 WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
@@ -198,7 +202,14 @@ WOMPI_SANDBOX_CARD_TOKEN="tok_test_from_wompi_sandbox"
 WOMPI_CUSTOMER_EMAIL="sandbox.user@comfort-api.local"
 ```
 
-## 10. Commands to run
+## 10. Security baseline (OWASP aligned)
+
+- Security headers via `helmet` (e.g. `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`).
+- Express hardening: `x-powered-by` disabled.
+- Request throttling via `express-rate-limit`.
+- Optional HTTPS enforcement (`FORCE_HTTPS=true`) with 301 redirect for non-HTTPS requests behind proxy.
+
+## 11. Commands to run
 
 1. Install dependencies:
 

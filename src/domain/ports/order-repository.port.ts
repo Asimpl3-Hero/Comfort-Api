@@ -14,5 +14,6 @@ export interface CreatePendingOrderInput {
 export interface OrderRepositoryPort {
   createPending(input: CreatePendingOrderInput): Promise<Result<Order, AppError>>;
   findById(id: string): Promise<Result<Order | null, AppError>>;
+  findPending(): Promise<Result<Order[], AppError>>;
   updateStatus(id: string, status: OrderStatus): Promise<Result<Order, AppError>>;
 }

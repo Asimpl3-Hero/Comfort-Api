@@ -1,11 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { ProductsController } from '../src/infrastructure/adapters/http/products.controller';
-import { GetProductsUseCase } from '../src/application/use-cases/get-products.use-case';
+import { AppModule } from '../src/app.module';
 import { PRODUCT_REPOSITORY_PORT } from '../src/domain/ports/product-repository.port';
+import { ORDER_REPOSITORY_PORT } from '../src/domain/ports/order-repository.port';
+import { PAYMENT_GATEWAY_PORT } from '../src/domain/ports/payment-gateway.port';
+import { ORDER_STATUS_POLLING_PORT } from '../src/domain/ports/order-status-polling.port';
 import type { ProductRepositoryPort } from '../src/domain/ports/product-repository.port';
+import type { OrderRepositoryPort } from '../src/domain/ports/order-repository.port';
+import type { PaymentGatewayPort } from '../src/domain/ports/payment-gateway.port';
+import type { OrderStatusPollingPort } from '../src/domain/ports/order-status-polling.port';
+import { PrismaService } from '../src/infrastructure/adapters/persistence/prisma.service';
 import { ok } from '../src/shared/railway/result';
 
 describe('ProductsController (e2e)', () => {
@@ -13,6 +19,23 @@ describe('ProductsController (e2e)', () => {
   const productRepositoryMock: jest.Mocked<ProductRepositoryPort> = {
     findAll: jest.fn(),
     findById: jest.fn(),
+  };
+  const orderRepositoryMock: jest.Mocked<OrderRepositoryPort> = {
+    createPending: jest.fn(),
+    findById: jest.fn(),
+    findPending: jest.fn(),
+    updateStatus: jest.fn(),
+  };
+  const paymentGatewayMock: jest.Mocked<PaymentGatewayPort> = {
+    createTransaction: jest.fn(),
+    getTransactionStatus: jest.fn(),
+  };
+  const pollingMock: jest.Mocked<OrderStatusPollingPort> = {
+    start: jest.fn(),
+  };
+  const prismaMock = {
+    onModuleInit: jest.fn(),
+    onModuleDestroy: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -28,19 +51,36 @@ describe('ProductsController (e2e)', () => {
         },
       ]),
     );
+    orderRepositoryMock.findPending.mockResolvedValue(ok([]));
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [ProductsController],
-      providers: [
-        GetProductsUseCase,
-        {
-          provide: PRODUCT_REPOSITORY_PORT,
-          useValue: productRepositoryMock,
-        },
-      ],
-    }).compile();
+    const moduleBuilder = Test.createTestingModule({
+      imports: [AppModule],
+    });
+
+    moduleBuilder
+      .overrideProvider(PRODUCT_REPOSITORY_PORT)
+      .useValue(productRepositoryMock);
+    moduleBuilder
+      .overrideProvider(ORDER_REPOSITORY_PORT)
+      .useValue(orderRepositoryMock);
+    moduleBuilder
+      .overrideProvider(PAYMENT_GATEWAY_PORT)
+      .useValue(paymentGatewayMock);
+    moduleBuilder
+      .overrideProvider(ORDER_STATUS_POLLING_PORT)
+      .useValue(pollingMock);
+    moduleBuilder.overrideProvider(PrismaService).useValue(prismaMock);
+
+    const moduleFixture: TestingModule = await moduleBuilder.compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
@@ -62,5 +102,12 @@ describe('ProductsController (e2e)', () => {
           created_at: '2026-01-01T00:00:00.000Z',
         },
       ]);
+  });
+
+  it('/orders (POST) should validate uuid and return 400 on invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/orders')
+      .send({ productId: 'not-a-uuid' })
+      .expect(400);
   });
 });

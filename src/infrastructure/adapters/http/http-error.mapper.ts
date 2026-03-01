@@ -8,7 +8,6 @@ const STATUS_BY_CODE: Record<AppError['code'], HttpStatus> = {
   PAYMENT_PROVIDER_ERROR: HttpStatus.BAD_GATEWAY,
   PERSISTENCE_ERROR: HttpStatus.INTERNAL_SERVER_ERROR,
   POLLING_ERROR: HttpStatus.INTERNAL_SERVER_ERROR,
-  INTERNAL_ERROR: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
 export const toHttpException = (error: AppError): HttpException =>

@@ -56,6 +56,27 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
     }
   }
 
+  public async findPending(): Promise<Result<Order[], AppError>> {
+    try {
+      const orders = await this.prisma.order.findMany({
+        where: {
+          status: 'PENDING',
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      return ok(orders.map((order) => this.toDomain(order)));
+    } catch (cause) {
+      return err({
+        code: 'PERSISTENCE_ERROR',
+        message: 'Failed to fetch pending orders.',
+        details: cause,
+      });
+    }
+  }
+
   public async updateStatus(
     id: string,
     status: OrderStatus,

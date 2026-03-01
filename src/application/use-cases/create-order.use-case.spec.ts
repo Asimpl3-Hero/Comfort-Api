@@ -34,6 +34,7 @@ describe('CreateOrderUseCase', () => {
     const orderRepository: jest.Mocked<OrderRepositoryPort> = {
       createPending: jest.fn(),
       findById: jest.fn(),
+      findPending: jest.fn(),
       updateStatus: jest.fn(),
     };
 

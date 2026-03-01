@@ -4,8 +4,7 @@ export type AppErrorCode =
   | 'ORDER_NOT_FOUND'
   | 'PAYMENT_PROVIDER_ERROR'
   | 'PERSISTENCE_ERROR'
-  | 'POLLING_ERROR'
-  | 'INTERNAL_ERROR';
+  | 'POLLING_ERROR';
 
 export interface AppError {
   code: AppErrorCode;

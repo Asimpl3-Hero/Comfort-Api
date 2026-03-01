@@ -69,13 +69,15 @@ export class WompiAdapter implements PaymentGatewayPort {
       });
     }
 
-    const checkoutUrl =
-      responseData.data?.checkout_url ??
-      this.buildCheckoutUrl(
-        input.amountInCents,
-        input.currency,
-        input.orderReference,
-      );
+    const checkoutUrl = responseData.data?.checkout_url;
+    if (!checkoutUrl) {
+      return err({
+        code: 'PAYMENT_PROVIDER_ERROR',
+        message:
+          'Wompi did not return a checkout_url. The payment flow is not usable.',
+        details: responseData,
+      });
+    }
 
     return ok({
       transactionId,
@@ -107,21 +109,6 @@ export class WompiAdapter implements PaymentGatewayPort {
       providerStatus,
       orderStatus,
     });
-  }
-
-  private buildCheckoutUrl(
-    amountInCents: number,
-    currency: string,
-    reference: string,
-  ): string {
-    const params = new URLSearchParams({
-      'public-key': this.appConfigService.wompiPublicKey,
-      currency,
-      'amount-in-cents': String(amountInCents),
-      reference,
-    });
-
-    return `https://checkout.wompi.co/p/?${params.toString()}`;
   }
 
   private async request<T>(
