@@ -4,72 +4,97 @@ const prisma = new PrismaClient();
 
 const products = [
   {
-    name: 'Orthopedic Pillow',
-    description: 'Memory-foam pillow with cervical support for side sleepers.',
-    priceInCents: 12900,
+    name: 'Almohada ortopédica',
+    description:
+      'Almohada de espuma viscoelástica con soporte cervical para quienes duermen de lado',
+    priceInCents: 1290000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/mxh6789-bedding-4321545_1920.jpg',
     stock: 14,
     currency: 'COP',
   },
   {
-    name: 'Weighted Blanket',
-    description: 'Calming 7kg weighted blanket with breathable cotton cover.',
-    priceInCents: 21900,
+    name: 'Manta ponderada',
+    description:
+      'Manta calmante con peso de 7 kg con funda de algodón transpirable.',
+    priceInCents: 2190000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/stocksnap-blanket-2593141_1920.jpg',
     stock: 8,
     currency: 'COP',
   },
   {
-    name: 'Ergonomic Desk Chair',
-    description: 'Lumbar-support chair with 3D armrests and mesh back.',
-    priceInCents: 45900,
+    name: 'Silla Comfort',
+    description: 'Silla comoda con diseño relajante y artesanal.',
+    priceInCents: 4590000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/stocksnap-architecture-2576906_1920.jpg',
     stock: 5,
     currency: 'COP',
   },
   {
-    name: 'Blue-Light Glasses',
-    description: 'Anti-reflective lenses designed for long screen sessions.',
-    priceInCents: 8900,
+    name: 'Set de Sabanas',
+    description: 'Set variado de mantas para hacer yoga',
+    priceInCents: 890000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/christineterkouche-fabrics-250330_1920.jpg',
     stock: 27,
     currency: 'COP',
   },
   {
-    name: 'Aromatherapy Diffuser',
-    description: 'Ultrasonic diffuser with auto-shutoff and soft ambient light.',
-    priceInCents: 14900,
+    name: 'Difusor de aromaterapia',
+    description:
+      'Difusor ultrasónico con apagado automático y luz ambiental suave.',
+    priceInCents: 1490000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/asundermeier-diffuser-4078729_1920.jpg',
     stock: 11,
     currency: 'COP',
   },
   {
-    name: 'Portable Massage Gun',
+    name: 'Juguete de Masaje',
     description: 'Compact percussion massager with 6 speed levels.',
-    priceInCents: 28900,
+    priceInCents: 2890000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/coernl-hedgehog-ball-7921103_1920.jpg',
     stock: 9,
     currency: 'COP',
   },
   {
     name: 'Yoga Mat Pro',
-    description: 'Non-slip 6mm mat with high-density cushioning.',
-    priceInCents: 16900,
+    description:
+      'Alfombrilla antideslizante de 6mm con amortiguación de alta densidad.',
+    priceInCents: 1690000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/jeviniya-yoga-1146281_1920.jpg',
     stock: 18,
     currency: 'COP',
   },
   {
-    name: 'Smart Water Bottle',
-    description: 'Hydration tracker bottle with LED reminder and app sync.',
-    priceInCents: 19900,
+    name: 'Botella de agua inteligente',
+    description:
+      'Botella rastreadora de hidratación con recordatorio LED y sincronización de aplicaciones.',
+    priceInCents: 1990000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/ds_30-accessories-4887141_1920.jpg',
     stock: 16,
     currency: 'COP',
   },
   {
-    name: 'Noise-Cancelling Earbuds',
-    description: 'Wireless earbuds with hybrid ANC and 24h battery life.',
-    priceInCents: 39900,
+    name: 'Audifonos Sound-Cancel',
+    description:
+      'Auriculares inalámbricos con ANC híbrido y 24 horas de duración de batería.',
+    priceInCents: 3990000,
+    imageUrl: 'https://placehold.co/640x860/png?text=Noise-Cancelling+Earbuds',
     stock: 7,
     currency: 'COP',
   },
   {
-    name: 'Air Purifier Mini',
-    description: 'Desktop HEPA purifier for personal workspaces and bedrooms.',
-    priceInCents: 25900,
+    name: 'Conjunto Yoga',
+    description: 'Conjunto sport para hacer yoga.',
+    priceInCents: 2590000,
+    imageUrl:
+      'https://pixabay.com/es/images/download/1162835-portrait-3600667_1920.jpg',
     stock: 12,
     currency: 'COP',
   },

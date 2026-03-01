@@ -12,6 +12,7 @@ model Product {
   name         String
   description  String
   priceInCents Int      @map("price_in_cents")
+  imageUrl     String   @default("") @map("image_url")
   stock        Int      @default(0)
   currency     String
   createdAt    DateTime @default(now()) @map("created_at")

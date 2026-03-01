@@ -57,7 +57,10 @@ src/
 │   │   │   ├── wompi.adapter.ts
 │   │   │   └── wompi-order-status-polling.service.ts
 │   │   └── http/
+│   │       ├── docs/
+│   │       │   └── swagger.schemas.ts
 │   │       ├── http-error.mapper.ts
+│   │       ├── health.controller.ts
 │   │       ├── orders.controller.ts
 │   │       └── products.controller.ts
 │   └── config/
@@ -87,6 +90,8 @@ prisma/
   - Polls every 5 seconds and updates order state until `APPROVED`, `DECLINED`, or 60-second timeout.
 - `infrastructure/adapters/http/*.controller.ts`
   - Controllers only orchestrate use cases and map `Result` to HTTP responses.
+- `infrastructure/adapters/http/docs/swagger.schemas.ts`
+  - OpenAPI schemas are defined in infrastructure to avoid coupling domain/application with Swagger decorators.
 
 ## 4. Prisma schema (data model)
 
@@ -156,6 +161,10 @@ No webhooks are used.
 
 ## 8. API endpoints
 
+### `GET /health`
+
+Returns API liveness status for ops/monitoring.
+
 ### `GET /products`
 
 Returns seeded products.
@@ -184,6 +193,15 @@ Response:
 
 Returns current order status and order data.
 
+## 8.1 Swagger documentation
+
+Swagger is configured in `main.ts` and documented at controller level (infrastructure layer).
+
+- Default URL: `http://localhost:3000/docs`
+- Configurable by env:
+  - `SWAGGER_ENABLED` (`true` | `false`)
+  - `SWAGGER_PATH` (default: `docs`)
+
 ## 9. Environment variables
 
 Use `.env.example` as template:
@@ -194,6 +212,9 @@ NODE_ENV="development"
 FORCE_HTTPS="false"
 RATE_LIMIT_WINDOW_MS="60000"
 RATE_LIMIT_MAX_REQUESTS="120"
+CORS_ORIGINS="http://localhost:5173"
+SWAGGER_ENABLED="true"
+SWAGGER_PATH="docs"
 WOMPI_BASE_URL="https://api-sandbox.co.uat.wompi.dev/v1"
 WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
 WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
@@ -247,6 +268,12 @@ npm run prisma:seed
 npm run start:dev
 ```
 
+Swagger UI:
+
+```bash
+http://localhost:3000/docs
+```
+
 7. Run tests:
 
 ```bash
@@ -270,7 +297,7 @@ docker compose --profile seed run --rm seed
 3. Check API health manually:
 
 ```bash
-curl http://localhost:3000/products
+curl http://localhost:3000/health
 ```
 
 Notes:

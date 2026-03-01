@@ -8,7 +8,10 @@ import type {
 } from '../../../src/domain/ports/payment-gateway.port';
 import type { ProductRepositoryPort } from '../../../src/domain/ports/product-repository.port';
 import type { OrderStatusPollingPort } from '../../../src/domain/ports/order-status-polling.port';
-import type { Order, OrderStatus } from '../../../src/domain/entities/order.entity';
+import type {
+  Order,
+  OrderStatus,
+} from '../../../src/domain/entities/order.entity';
 import type { Product } from '../../../src/domain/entities/product.entity';
 import { err, ok, type Result } from '../../../src/shared/railway/result';
 import type { AppError } from '../../../src/shared/errors/app-error';
@@ -111,8 +114,10 @@ export class FixedSuccessPaymentGateway implements PaymentGatewayPort {
 }
 
 export class SpyPollingService implements OrderStatusPollingPort {
-  public readonly calls: Array<{ orderId: string; wompiTransactionId: string }> =
-    [];
+  public readonly calls: Array<{
+    orderId: string;
+    wompiTransactionId: string;
+  }> = [];
 
   public async start(
     orderId: string,

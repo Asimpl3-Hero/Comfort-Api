@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -10,8 +11,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const expressApp = app.getHttpAdapter().getInstance();
+  const corsOrigins = parseCsv(configService.get<string>('CORS_ORIGINS'), [
+    'http://localhost:5173',
+  ]);
 
-  const forceHttps = getBoolean(configService.get<string>('FORCE_HTTPS'), false);
+  const forceHttps = getBoolean(
+    configService.get<string>('FORCE_HTTPS'),
+    false,
+  );
   const rateLimitWindowMs = getNumber(
     configService.get<string>('RATE_LIMIT_WINDOW_MS'),
     60_000,
@@ -20,9 +27,21 @@ async function bootstrap() {
     configService.get<string>('RATE_LIMIT_MAX_REQUESTS'),
     120,
   );
+  const swaggerEnabled = getBoolean(
+    configService.get<string>('SWAGGER_ENABLED'),
+    true,
+  );
+  const swaggerPath =
+    configService.get<string>('SWAGGER_PATH')?.trim() || 'docs';
 
   expressApp.disable('x-powered-by');
   expressApp.set('trust proxy', 1);
+
+  app.enableCors({
+    origin: corsOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   app.use(
     helmet({
@@ -48,7 +67,7 @@ async function bootstrap() {
       const forwardedProto = request.headers['x-forwarded-proto'];
       const protocol = Array.isArray(forwardedProto)
         ? forwardedProto[0]
-        : forwardedProto ?? request.protocol;
+        : (forwardedProto ?? request.protocol);
 
       if (protocol === 'https') {
         return next();
@@ -75,6 +94,23 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  if (swaggerEnabled) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Comfort API')
+      .setDescription(
+        'Backend API for products and orders using Hexagonal Architecture and Wompi sandbox integration.',
+      )
+      .setVersion('1.0.0')
+      .addServer('/')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup(swaggerPath, app, document, {
+      customSiteTitle: 'Comfort API Docs',
+    });
+  }
+
   await app.listen(process.env.PORT ?? 3000);
 }
 
@@ -97,6 +133,19 @@ function getNumber(value: string | undefined, fallback: number): number {
   }
 
   return parsed;
+}
+
+function parseCsv(value: string | undefined, fallback: string[]): string[] {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return parsed.length > 0 ? parsed : fallback;
 }
 
 bootstrap();

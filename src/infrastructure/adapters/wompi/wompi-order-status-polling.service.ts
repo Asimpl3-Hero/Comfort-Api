@@ -5,17 +5,11 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import {
-  ORDER_REPOSITORY_PORT,
-} from '../../../domain/ports/order-repository.port';
+import { ORDER_REPOSITORY_PORT } from '../../../domain/ports/order-repository.port';
 import type { OrderRepositoryPort } from '../../../domain/ports/order-repository.port';
-import {
-  PRODUCT_REPOSITORY_PORT,
-} from '../../../domain/ports/product-repository.port';
+import { PRODUCT_REPOSITORY_PORT } from '../../../domain/ports/product-repository.port';
 import type { ProductRepositoryPort } from '../../../domain/ports/product-repository.port';
-import {
-  PAYMENT_GATEWAY_PORT,
-} from '../../../domain/ports/payment-gateway.port';
+import { PAYMENT_GATEWAY_PORT } from '../../../domain/ports/payment-gateway.port';
 import type { PaymentGatewayPort } from '../../../domain/ports/payment-gateway.port';
 import type { WompiTransactionStatus } from '../../../domain/ports/payment-gateway.port';
 import type { OrderStatusPollingPort } from '../../../domain/ports/order-status-polling.port';
@@ -136,8 +130,9 @@ export class WompiOrderStatusPollingService
           this.scheduleNextPoll(orderId, wompiTransactionId, startedAt);
           return;
         }
-        const transactionStatus =
-          (transactionStatusResult as Ok<WompiTransactionStatus>).value;
+        const transactionStatus = (
+          transactionStatusResult as Ok<WompiTransactionStatus>
+        ).value;
 
         const orderStatus = transactionStatus.orderStatus;
 

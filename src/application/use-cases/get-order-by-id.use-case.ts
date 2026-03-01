@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  ORDER_REPOSITORY_PORT,
-} from '../../domain/ports/order-repository.port';
+import { ORDER_REPOSITORY_PORT } from '../../domain/ports/order-repository.port';
 import type { OrderRepositoryPort } from '../../domain/ports/order-repository.port';
 import { Order } from '../../domain/entities/order.entity';
 import { AppError } from '../../shared/errors/app-error';

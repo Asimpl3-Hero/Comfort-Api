@@ -13,10 +13,7 @@ export abstract class Result<T, E> {
 
   public abstract flatMap<U>(fn: (value: T) => Result<U, E>): Result<U, E>;
 
-  public abstract match<R>(
-    onOk: (value: T) => R,
-    onErr: (error: E) => R,
-  ): R;
+  public abstract match<R>(onOk: (value: T) => R, onErr: (error: E) => R): R;
 
   public isOk(): this is Ok<T> {
     return this.type === 'ok';

@@ -1,20 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import {
-  PRODUCT_REPOSITORY_PORT,
-} from '../../domain/ports/product-repository.port';
+import { PRODUCT_REPOSITORY_PORT } from '../../domain/ports/product-repository.port';
 import type { ProductRepositoryPort } from '../../domain/ports/product-repository.port';
-import {
-  ORDER_REPOSITORY_PORT,
-} from '../../domain/ports/order-repository.port';
+import { ORDER_REPOSITORY_PORT } from '../../domain/ports/order-repository.port';
 import type { OrderRepositoryPort } from '../../domain/ports/order-repository.port';
-import {
-  ORDER_STATUS_POLLING_PORT,
-} from '../../domain/ports/order-status-polling.port';
+import { ORDER_STATUS_POLLING_PORT } from '../../domain/ports/order-status-polling.port';
 import type { OrderStatusPollingPort } from '../../domain/ports/order-status-polling.port';
-import {
-  PAYMENT_GATEWAY_PORT,
-} from '../../domain/ports/payment-gateway.port';
+import { PAYMENT_GATEWAY_PORT } from '../../domain/ports/payment-gateway.port';
 import type {
   CreatedWompiTransaction,
   PaymentMethodInput,
@@ -58,7 +50,9 @@ export class CreateOrderUseCase {
   public async execute(
     input: CreateOrderInput,
   ): Promise<Result<OrderCreatedResponseDto, AppError>> {
-    const productResult = await this.productRepository.findById(input.productId);
+    const productResult = await this.productRepository.findById(
+      input.productId,
+    );
     if (productResult.isErr()) {
       return productResult;
     }

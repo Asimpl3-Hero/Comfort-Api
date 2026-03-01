@@ -56,7 +56,12 @@ describe('PrismaOrderRepositoryAdapter', () => {
 
     const result = await adapter.findById('missing');
 
-    expect(result.match((v) => v, () => 'err')).toBeNull();
+    expect(
+      result.match(
+        (v) => v,
+        () => 'err',
+      ),
+    ).toBeNull();
   });
 
   it('returns pending orders list', async () => {

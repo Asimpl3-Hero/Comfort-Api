@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  PRODUCT_REPOSITORY_PORT,
-} from '../../domain/ports/product-repository.port';
+import { PRODUCT_REPOSITORY_PORT } from '../../domain/ports/product-repository.port';
 import type { ProductRepositoryPort } from '../../domain/ports/product-repository.port';
 import { Product } from '../../domain/entities/product.entity';
 import { AppError } from '../../shared/errors/app-error';

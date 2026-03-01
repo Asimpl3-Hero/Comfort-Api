@@ -49,16 +49,19 @@ export class WompiAdapter implements PaymentGatewayPort {
       payment_method: this.mapPaymentMethod(input.paymentMethod),
     };
 
-    const responseResult =
-      await this.request<WompiCreateTransactionResponse>('/transactions', {
+    const responseResult = await this.request<WompiCreateTransactionResponse>(
+      '/transactions',
+      {
         method: 'POST',
         body: JSON.stringify(payload),
-      });
+      },
+    );
 
     if (responseResult.isErr()) {
       return responseResult;
     }
-    const responseData = (responseResult as Ok<WompiCreateTransactionResponse>).value;
+    const responseData = (responseResult as Ok<WompiCreateTransactionResponse>)
+      .value;
 
     const transactionId = responseData.data?.id;
     const providerStatus = responseData.data?.status ?? 'PENDING';
@@ -120,21 +123,22 @@ export class WompiAdapter implements PaymentGatewayPort {
   public async getTransactionStatus(
     transactionId: string,
   ): Promise<Result<WompiTransactionStatus, AppError>> {
-    const responseResult =
-      await this.request<WompiGetTransactionResponse>(
-        `/transactions/${transactionId}`,
-        {
-          method: 'GET',
-        },
-      );
+    const responseResult = await this.request<WompiGetTransactionResponse>(
+      `/transactions/${transactionId}`,
+      {
+        method: 'GET',
+      },
+    );
 
     if (responseResult.isErr()) {
       return responseResult;
     }
-    const responseData = (responseResult as Ok<WompiGetTransactionResponse>).value;
+    const responseData = (responseResult as Ok<WompiGetTransactionResponse>)
+      .value;
 
     const providerStatus = responseData.data?.status ?? 'PENDING';
-    const orderStatus = this.orderStatusService.mapProviderStatus(providerStatus);
+    const orderStatus =
+      this.orderStatusService.mapProviderStatus(providerStatus);
 
     return ok({
       providerStatus,
@@ -147,14 +151,17 @@ export class WompiAdapter implements PaymentGatewayPort {
     init: RequestInit,
   ): Promise<Result<T, AppError>> {
     try {
-      const response = await fetch(`${this.appConfigService.wompiBaseUrl}${path}`, {
-        ...init,
-        headers: {
-          Authorization: `Bearer ${this.appConfigService.wompiPrivateKey}`,
-          'Content-Type': 'application/json',
-          ...(init.headers ?? {}),
+      const response = await fetch(
+        `${this.appConfigService.wompiBaseUrl}${path}`,
+        {
+          ...init,
+          headers: {
+            Authorization: `Bearer ${this.appConfigService.wompiPrivateKey}`,
+            'Content-Type': 'application/json',
+            ...(init.headers ?? {}),
+          },
         },
-      });
+      );
 
       const data = (await response.json().catch(() => ({}))) as T;
 

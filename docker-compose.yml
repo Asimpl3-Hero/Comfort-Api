@@ -47,7 +47,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    entrypoint: ['npm', 'run', 'prisma:seed']
+    entrypoint:
+      - /bin/sh
+      - -c
+      - npm run prisma:generate && npm run prisma:seed
     profiles: ['seed']
 
 volumes:

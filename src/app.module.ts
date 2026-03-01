@@ -6,6 +6,7 @@ import { GetProductsUseCase } from './application/use-cases/get-products.use-cas
 import { OrderStatusService } from './domain/services/order-status.service';
 import { ProductsController } from './infrastructure/adapters/http/products.controller';
 import { OrdersController } from './infrastructure/adapters/http/orders.controller';
+import { HealthController } from './infrastructure/adapters/http/health.controller';
 import { PrismaOrderRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-order.repository.adapter';
 import { PrismaProductRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-product.repository.adapter';
 import { PrismaService } from './infrastructure/adapters/persistence/prisma.service';
@@ -23,7 +24,7 @@ import { ORDER_STATUS_POLLING_PORT } from './domain/ports/order-status-polling.p
       isGlobal: true,
     }),
   ],
-  controllers: [ProductsController, OrdersController],
+  controllers: [ProductsController, OrdersController, HealthController],
   providers: [
     AppConfigService,
     PrismaService,

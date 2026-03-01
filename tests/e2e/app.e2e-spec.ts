@@ -47,6 +47,7 @@ describe('ProductsController (e2e)', () => {
           name: 'Mock Product',
           description: 'Mocked for e2e',
           priceInCents: 10000,
+          imageUrl: 'https://placehold.co/640x860/png?text=Mock+Product',
           stock: 4,
           currency: 'COP',
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -100,11 +101,25 @@ describe('ProductsController (e2e)', () => {
           name: 'Mock Product',
           description: 'Mocked for e2e',
           price_in_cents: 10000,
+          image_url: 'https://placehold.co/640x860/png?text=Mock+Product',
+          imageUrl: 'https://placehold.co/640x860/png?text=Mock+Product',
           stock: 4,
           currency: 'COP',
           created_at: '2026-01-01T00:00:00.000Z',
         },
       ]);
+  });
+
+  it('/health (GET)', async () => {
+    const response = await request(app.getHttpServer()).get('/health').expect(200);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        status: 'ok',
+      }),
+    );
+    expect(typeof response.body.timestamp).toBe('string');
+    expect(typeof response.body.uptime_in_seconds).toBe('number');
   });
 
   it('/orders (POST) should validate uuid and return 400 on invalid payload', () => {

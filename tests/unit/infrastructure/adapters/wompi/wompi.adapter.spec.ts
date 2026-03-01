@@ -45,7 +45,9 @@ describe('WompiAdapter', () => {
   it('returns PAYMENT_PROVIDER_ERROR when transaction id is missing', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { checkout_url: 'https://checkout.wompi.co' } }),
+      json: async () => ({
+        data: { checkout_url: 'https://checkout.wompi.co' },
+      }),
     } as Response);
 
     const result = await adapter.createTransaction({
@@ -91,7 +93,12 @@ describe('WompiAdapter', () => {
 
     const result = await adapter.getTransactionStatus('tx1');
 
-    expect(result.match((v) => v.orderStatus, () => 'DECLINED')).toBe('APPROVED');
+    expect(
+      result.match(
+        (v) => v.orderStatus,
+        () => 'DECLINED',
+      ),
+    ).toBe('APPROVED');
   });
 
   it('returns PAYMENT_PROVIDER_ERROR on non-ok response', async () => {
