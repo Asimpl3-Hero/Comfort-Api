@@ -1,98 +1,243 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+﻿# Comfort API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Production-ready backend API built with NestJS + TypeScript, using Hexagonal Architecture (Ports & Adapters), Railway Oriented Programming (ROP), Prisma, PostgreSQL, and Wompi sandbox integration.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 1. Step-by-step implementation guide
 
-## Description
+1. Build domain and application layers first.
+   - Define entities, value objects, domain services.
+   - Define ports as interfaces/tokens.
+   - Implement use cases returning `Result<T, E>`.
+2. Implement infrastructure adapters.
+   - Prisma adapters for repository ports.
+   - Wompi adapter for payment port.
+   - Background polling service for transaction lifecycle.
+3. Implement thin HTTP controllers.
+   - Controllers only orchestrate use cases.
+   - Controllers map `Result` to HTTP responses.
+4. Configure environment and persistence.
+   - `ConfigModule` for all env vars.
+   - Prisma schema, push, generate, seed.
+5. Add quality gates.
+   - Unit tests for use case behavior with mocked ports.
+   - Validation pipe and DTO validation.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 2. Full folder structure
 
-## Project setup
+```text
+src/
+├── domain/
+│   ├── entities/
+│   │   ├── order.entity.ts
+│   │   └── product.entity.ts
+│   ├── value-objects/
+│   │   └── money.vo.ts
+│   ├── ports/
+│   │   ├── order-repository.port.ts
+│   │   ├── order-status-polling.port.ts
+│   │   ├── payment-gateway.port.ts
+│   │   └── product-repository.port.ts
+│   └── services/
+│       └── order-status.service.ts
+├── application/
+│   ├── use-cases/
+│   │   ├── create-order.use-case.ts
+│   │   ├── get-order-by-id.use-case.ts
+│   │   └── get-products.use-case.ts
+│   └── dto/
+│       ├── create-order-request.dto.ts
+│       └── order-created-response.dto.ts
+├── infrastructure/
+│   ├── adapters/
+│   │   ├── persistence/
+│   │   │   ├── prisma-order.repository.adapter.ts
+│   │   │   ├── prisma-product.repository.adapter.ts
+│   │   │   └── prisma.service.ts
+│   │   ├── wompi/
+│   │   │   ├── wompi.adapter.ts
+│   │   │   └── wompi-order-status-polling.service.ts
+│   │   └── http/
+│   │       ├── http-error.mapper.ts
+│   │       ├── orders.controller.ts
+│   │       └── products.controller.ts
+│   └── config/
+│       └── app-config.service.ts
+├── shared/
+│   ├── errors/
+│   │   └── app-error.ts
+│   └── railway/
+│       ├── index.ts
+│       └── result.ts
+├── app.module.ts
+└── main.ts
 
-```bash
-$ npm install
+prisma/
+├── schema.prisma
+└── seed.ts
 ```
 
-## Compile and run the project
+## 3. Core files implementation
+
+- `shared/railway/result.ts`
+  - Provides `Ok`, `Err`, `map`, `flatMap`, `match`, `isOk`, `isErr`.
+  - All use cases and adapters communicate failures without throwing business exceptions.
+- `application/use-cases/create-order.use-case.ts`
+  - Fetches product, validates money, creates Wompi transaction, persists order as `PENDING`, starts background polling.
+- `infrastructure/adapters/wompi/wompi-order-status-polling.service.ts`
+  - Polls every 5 seconds and updates order state until `APPROVED`, `DECLINED`, or 60-second timeout.
+- `infrastructure/adapters/http/*.controller.ts`
+  - Controllers only orchestrate use cases and map `Result` to HTTP responses.
+
+## 4. Prisma schema (data model)
+
+Models:
+
+- `products`
+  - `id` uuid
+  - `name`
+  - `description`
+  - `price_in_cents`
+  - `currency`
+  - `created_at`
+- `orders`
+  - `id` uuid
+  - `product_id` FK -> `products.id`
+  - `amount_in_cents`
+  - `currency`
+  - `wompi_transaction_id`
+  - `status` (`PENDING | APPROVED | DECLINED`)
+  - `created_at`
+
+Schema file: `prisma/schema.prisma`.
+
+## 5. Seed script
+
+Seed file: `prisma/seed.ts`
+
+- Deletes existing orders/products.
+- Inserts 10 dummy products.
+- No API endpoint exists to create products.
+
+Run:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run prisma:seed
 ```
 
-## Run tests
+## 6. Wompi integration (sandbox only)
+
+Configured to use sandbox:
+
+- Base URL: `https://api-sandbox.co.uat.wompi.dev/v1`
+- Public key: `pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7`
+- Private key: `prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg`
+- Acceptance token: from Wompi sandbox merchant terms (`WOMPI_ACCEPTANCE_TOKEN`)
+- Sandbox card token: generated with Wompi test cards (`WOMPI_SANDBOX_CARD_TOKEN`)
+
+`WompiAdapter` responsibilities:
+
+- Create transaction (`POST /transactions`).
+- Poll transaction status (`GET /transactions/:id`).
+- Convert provider status into domain order status through `OrderStatusService`.
+
+## 7. Polling strategy
+
+After `POST /orders`:
+
+1. Save order as `PENDING`.
+2. Start background polling every 5 seconds.
+3. Stop polling when:
+   - status becomes `APPROVED`, or
+   - status becomes `DECLINED`, or
+   - 60 seconds elapsed.
+4. Persist final status in DB.
+
+No webhooks are used.
+
+## 8. API endpoints
+
+### `GET /products`
+
+Returns seeded products.
+
+### `POST /orders`
+
+Body:
+
+```json
+{
+  "productId": "uuid"
+}
+```
+
+Response:
+
+```json
+{
+  "orderId": "uuid",
+  "checkoutUrl": "https://checkout.wompi.co/p/?...",
+  "status": "PENDING"
+}
+```
+
+### `GET /orders/:id`
+
+Returns current order status and order data.
+
+## 9. Environment variables
+
+Use `.env.example` as template:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/comfort_api?schema=public"
+WOMPI_BASE_URL="https://api-sandbox.co.uat.wompi.dev/v1"
+WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
+WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
+WOMPI_ACCEPTANCE_TOKEN="acceptance_token_from_wompi_sandbox"
+WOMPI_SANDBOX_CARD_TOKEN="tok_test_from_wompi_sandbox"
+WOMPI_CUSTOMER_EMAIL="sandbox.user@comfort-api.local"
+```
+
+## 10. Commands to run
+
+1. Install dependencies:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2. Create local env:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cp .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+3. Generate Prisma client:
 
-## Resources
+```bash
+npm run prisma:generate
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+4. Push schema to PostgreSQL:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm run prisma:push
+```
 
-## Support
+5. Seed products:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm run prisma:seed
+```
 
-## Stay in touch
+6. Start API:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npm run start:dev
+```
 
-## License
+7. Run tests:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm run test
+```

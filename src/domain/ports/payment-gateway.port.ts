@@ -8,7 +8,6 @@ export interface CreateWompiTransactionInput {
   orderReference: string;
   amountInCents: number;
   currency: string;
-  customerEmail: string;
 }
 
 export interface CreatedWompiTransaction {

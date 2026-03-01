@@ -76,7 +76,6 @@ export class CreateOrderUseCase {
       orderReference: randomUUID(),
       amountInCents: money.amountInCents,
       currency: money.currency,
-      customerEmail: 'sandbox.user@comfort-api.local',
     });
     if (paymentResult.isErr()) {
       return paymentResult;

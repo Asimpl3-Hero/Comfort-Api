@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import type { CreateOrderRequestDto } from '../../../application/dto/create-order-request.dto';
+import { CreateOrderRequestDto } from '../../../application/dto/create-order-request.dto';
 import { CreateOrderUseCase } from '../../../application/use-cases/create-order.use-case';
 import { GetOrderByIdUseCase } from '../../../application/use-cases/get-order-by-id.use-case';
 import { toHttpException } from './http-error.mapper';

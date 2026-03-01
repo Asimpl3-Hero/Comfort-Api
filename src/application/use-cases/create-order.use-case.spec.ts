@@ -1,0 +1,150 @@
+import { CreateOrderUseCase } from './create-order.use-case';
+import type { ProductRepositoryPort } from '../../domain/ports/product-repository.port';
+import type { OrderRepositoryPort } from '../../domain/ports/order-repository.port';
+import type { PaymentGatewayPort } from '../../domain/ports/payment-gateway.port';
+import type { OrderStatusPollingPort } from '../../domain/ports/order-status-polling.port';
+import { err, ok } from '../../shared/railway/result';
+
+describe('CreateOrderUseCase', () => {
+  const baseProduct = {
+    id: 'f8f85493-3323-46b8-a6a6-0734496d72cd',
+    name: 'Test Product',
+    description: 'Test product description',
+    priceInCents: 15000,
+    currency: 'COP',
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  };
+
+  const baseOrder = {
+    id: '97fb06c8-0df9-42a5-9534-732f54a08c72',
+    productId: baseProduct.id,
+    amountInCents: 15000,
+    currency: 'COP',
+    wompiTransactionId: 'wompi_tx_123',
+    status: 'PENDING' as const,
+    createdAt: new Date('2026-01-01T00:01:00.000Z'),
+  };
+
+  const createMocks = () => {
+    const productRepository: jest.Mocked<ProductRepositoryPort> = {
+      findAll: jest.fn(),
+      findById: jest.fn(),
+    };
+
+    const orderRepository: jest.Mocked<OrderRepositoryPort> = {
+      createPending: jest.fn(),
+      findById: jest.fn(),
+      updateStatus: jest.fn(),
+    };
+
+    const paymentGateway: jest.Mocked<PaymentGatewayPort> = {
+      createTransaction: jest.fn(),
+      getTransactionStatus: jest.fn(),
+    };
+
+    const pollingService: jest.Mocked<OrderStatusPollingPort> = {
+      start: jest.fn(),
+    };
+
+    const useCase = new CreateOrderUseCase(
+      productRepository,
+      orderRepository,
+      paymentGateway,
+      pollingService,
+    );
+
+    return {
+      useCase,
+      productRepository,
+      orderRepository,
+      paymentGateway,
+      pollingService,
+    };
+  };
+
+  it('returns PRODUCT_NOT_FOUND when product does not exist', async () => {
+    const { useCase, productRepository } = createMocks();
+    productRepository.findById.mockResolvedValue(ok(null));
+
+    const result = await useCase.execute({
+      productId: '8f867a86-a89f-4b77-af96-8df287f4de59',
+    });
+
+    expect(result.isErr()).toBe(true);
+    const error = result.match(
+      () => null,
+      (errValue) => errValue,
+    );
+    expect(error).toMatchObject({
+      code: 'PRODUCT_NOT_FOUND',
+    });
+  });
+
+  it('creates an order and starts background polling', async () => {
+    const {
+      useCase,
+      productRepository,
+      orderRepository,
+      paymentGateway,
+      pollingService,
+    } = createMocks();
+
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+    paymentGateway.createTransaction.mockResolvedValue(
+      ok({
+        transactionId: baseOrder.wompiTransactionId,
+        checkoutUrl: 'https://checkout.wompi.co/p/?reference=abc',
+        providerStatus: 'PENDING',
+      }),
+    );
+    orderRepository.createPending.mockResolvedValue(ok(baseOrder));
+    pollingService.start.mockResolvedValue(ok(undefined));
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+    });
+
+    expect(result.isOk()).toBe(true);
+    const value = result.match(
+      (okValue) => okValue,
+      () => null,
+    );
+
+    expect(value).toEqual({
+      orderId: baseOrder.id,
+      checkoutUrl: 'https://checkout.wompi.co/p/?reference=abc',
+      status: 'PENDING',
+    });
+    expect(paymentGateway.createTransaction).toHaveBeenCalledTimes(1);
+    expect(orderRepository.createPending).toHaveBeenCalledWith({
+      productId: baseProduct.id,
+      amountInCents: baseProduct.priceInCents,
+      currency: baseProduct.currency,
+      wompiTransactionId: baseOrder.wompiTransactionId,
+    });
+    expect(pollingService.start).toHaveBeenCalledWith(
+      baseOrder.id,
+      baseOrder.wompiTransactionId,
+    );
+  });
+
+  it('propagates payment provider errors', async () => {
+    const { useCase, productRepository, paymentGateway, orderRepository } =
+      createMocks();
+
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+    paymentGateway.createTransaction.mockResolvedValue(
+      err({
+        code: 'PAYMENT_PROVIDER_ERROR',
+        message: 'Wompi unavailable',
+      }),
+    );
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(orderRepository.createPending).not.toHaveBeenCalled();
+  });
+});

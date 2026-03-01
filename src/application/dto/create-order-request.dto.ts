@@ -1,3 +1,6 @@
-export interface CreateOrderRequestDto {
-  productId: string;
+import { IsUUID } from 'class-validator';
+
+export class CreateOrderRequestDto {
+  @IsUUID()
+  public productId!: string;
 }

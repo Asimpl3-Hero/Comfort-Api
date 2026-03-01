@@ -37,11 +37,12 @@ export class WompiAdapter implements PaymentGatewayPort {
     const payload = {
       amount_in_cents: input.amountInCents,
       currency: input.currency,
-      customer_email: input.customerEmail,
+      customer_email: this.appConfigService.wompiCustomerEmail,
       reference: input.orderReference,
+      acceptance_token: this.appConfigService.wompiAcceptanceToken,
       payment_method: {
         type: 'CARD',
-        token: 'tok_sandbox_placeholder',
+        token: this.appConfigService.wompiSandboxCardToken,
         installments: 1,
       },
     };
