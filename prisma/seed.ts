@@ -28,7 +28,7 @@ const products = [
     description: 'Silla comoda con diseño relajante y artesanal.',
     priceInCents: 4590000,
     imageUrl:
-      'https://pixabay.com/es/images/download/daria-yakovleva-chair-4788242_1920.jpg',
+      'https://cdn.pixabay.com/photo/2020/01/23/17/04/chair-4788242_1280.jpg',
     stock: 5,
     currency: 'COP',
   },
