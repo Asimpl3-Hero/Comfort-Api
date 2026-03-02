@@ -26,6 +26,7 @@ import {
 
 export interface CreateOrderInput {
   productId: string;
+  customerEmail: string;
   paymentMethodType?: PaymentMethodType;
   paymentMethodData?: CreateOrderPaymentMethodData;
 }
@@ -95,6 +96,7 @@ export class CreateOrderUseCase {
       orderReference: randomUUID(),
       amountInCents: money.amountInCents,
       currency: money.currency,
+      customerEmail: input.customerEmail,
       paymentMethod,
     });
     if (paymentResult.isErr()) {

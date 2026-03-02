@@ -71,7 +71,7 @@ export class WompiAdapter implements PaymentGatewayPort {
     const payload = {
       amount_in_cents: input.amountInCents,
       currency: input.currency,
-      customer_email: this.appConfigService.wompiCustomerEmail,
+      customer_email: input.customerEmail,
       reference: input.orderReference,
       signature: integritySignature,
       acceptance_token: acceptanceToken,

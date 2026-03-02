@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3001}
       DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-comfort_api}?schema=public"
       FORCE_HTTPS: ${FORCE_HTTPS:-true}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
@@ -35,15 +36,13 @@ services:
       WOMPI_PRIVATE_KEY: ${WOMPI_PRIVATE_KEY:-prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg}
       WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET:-stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp}
       WOMPI_ACCEPTANCE_TOKEN: ${WOMPI_ACCEPTANCE_TOKEN:-acceptance_token_from_wompi_sandbox}
-      WOMPI_SANDBOX_CARD_TOKEN: ${WOMPI_SANDBOX_CARD_TOKEN:-tok_test_from_wompi_sandbox}
-      WOMPI_CUSTOMER_EMAIL: ${WOMPI_CUSTOMER_EMAIL:-sandbox.user@comfort-api.local}
       DB_PUSH_MAX_RETRIES: ${DB_PUSH_MAX_RETRIES:-30}
       DB_PUSH_RETRY_DELAY_SECONDS: ${DB_PUSH_RETRY_DELAY_SECONDS:-2}
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - '${HOST_PORT:-3001}:3000'
+      - '${HOST_PORT:-3001}:${PORT:-3001}'
 
   seed:
     build:

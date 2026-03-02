@@ -14,7 +14,6 @@ describe('AppConfigService', () => {
     expect(service.wompiPrivateKey).toBe('WOMPI_PRIVATE_KEY_VALUE');
     expect(service.wompiIntegritySecret).toBe('WOMPI_INTEGRITY_SECRET_VALUE');
     expect(service.wompiAcceptanceToken).toBe('WOMPI_ACCEPTANCE_TOKEN_VALUE');
-    expect(service.wompiCustomerEmail).toBe('WOMPI_CUSTOMER_EMAIL_VALUE');
   });
 
   it('returns undefined for optional keys when missing', () => {

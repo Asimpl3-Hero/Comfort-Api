@@ -139,6 +139,7 @@ Configured to use sandbox:
 - Integrity secret: `stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp` (`WOMPI_INTEGRITY_SECRET`)
 - Acceptance token: from Wompi sandbox merchant terms (`WOMPI_ACCEPTANCE_TOKEN`)
 - Card token: must be generated in frontend with Wompi sandbox `POST /tokens/cards` and sent as `paymentMethodData.cardToken`
+- Customer email: must be sent by frontend in `POST /orders` as `customerEmail`
 
 `WompiAdapter` responsibilities:
 
@@ -177,6 +178,7 @@ Body:
 ```json
 {
   "productId": "uuid",
+  "customerEmail": "buyer@example.com",
   "paymentMethodType": "CARD",
   "paymentMethodData": {
     "cardToken": "tok_test_123"
@@ -225,7 +227,6 @@ WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
 WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
 WOMPI_INTEGRITY_SECRET="stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp"
 WOMPI_ACCEPTANCE_TOKEN="acceptance_token_from_wompi_sandbox"
-WOMPI_CUSTOMER_EMAIL="sandbox.user@comfort-api.local"
 ```
 
 ## 10. Security baseline (OWASP aligned)

@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsEmail,
   IsIn,
   IsInt,
   IsOptional,
@@ -51,6 +52,9 @@ export class PaymentMethodDataDto {
 export class CreateOrderRequestDto {
   @IsUUID()
   public productId!: string;
+
+  @IsEmail()
+  public customerEmail!: string;
 
   @IsOptional()
   @IsIn(PAYMENT_METHOD_TYPES)

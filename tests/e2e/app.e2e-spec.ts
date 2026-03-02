@@ -134,6 +134,7 @@ describe('ProductsController (e2e)', () => {
       .post('/orders')
       .send({
         productId: '53ca8c5d-8e2b-4740-aa07-f5d5f42d2554',
+        customerEmail: 'buyer@example.com',
         paymentMethodType: 'CARD',
         paymentMethodData: {
           cardNumber: '4242424242424242',

@@ -27,6 +27,7 @@ describe('OrdersController', () => {
     const controller = new OrdersController(createUseCase, getByIdUseCase);
     const response = await controller.createOrder({
       productId: '4f3aef36-b1e6-4514-b0d5-1de4f5c8d548',
+      customerEmail: 'buyer@example.com',
     });
 
     expect(response).toEqual({
@@ -46,6 +47,7 @@ describe('OrdersController', () => {
     await expect(
       controller.createOrder({
         productId: '4f3aef36-b1e6-4514-b0d5-1de4f5c8d548',
+        customerEmail: 'buyer@example.com',
       }),
     ).rejects.toMatchObject({ status: 404 });
   });

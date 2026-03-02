@@ -78,6 +78,11 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
   type: 'object',
   properties: {
     productId: { type: 'string', format: 'uuid' },
+    customerEmail: {
+      type: 'string',
+      format: 'email',
+      example: 'buyer@example.com',
+    },
     paymentMethodType: {
       type: 'string',
       enum: ['CARD', 'NEQUI', 'PSE', 'BANCOLOMBIA_TRANSFER'],
@@ -87,7 +92,7 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
     },
     paymentMethodData: PAYMENT_METHOD_DATA_SCHEMA,
   },
-  required: ['productId'],
+  required: ['productId', 'customerEmail'],
   additionalProperties: false,
 };
 

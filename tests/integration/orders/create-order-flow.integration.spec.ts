@@ -28,6 +28,7 @@ describe('Order Flow Integration', () => {
 
     const createResult = await createOrderUseCase.execute({
       productId: product.id,
+      customerEmail: 'buyer@example.com',
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -71,6 +72,7 @@ describe('Order Flow Integration', () => {
 
     const result = await createOrderUseCase.execute({
       productId: 'missing-product',
+      customerEmail: 'buyer@example.com',
     });
 
     expect(result.isErr()).toBe(true);

@@ -26,6 +26,7 @@ describe('CreateOrderUseCase', () => {
     status: 'PENDING' as const,
     createdAt: new Date('2026-01-01T00:01:00.000Z'),
   };
+  const customerEmail = 'buyer@example.com';
 
   const createMocks = () => {
     const productRepository: jest.Mocked<ProductRepositoryPort> = {
@@ -73,6 +74,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: '8f867a86-a89f-4b77-af96-8df287f4de59',
+      customerEmail,
     });
 
     expect(result.isErr()).toBe(true);
@@ -107,6 +109,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -127,6 +130,7 @@ describe('CreateOrderUseCase', () => {
       orderReference: expect.any(String),
       amountInCents: baseProduct.priceInCents,
       currency: baseProduct.currency,
+      customerEmail,
       paymentMethod: {
         type: 'CARD',
         cardToken: 'tok_test_card_123',
@@ -159,6 +163,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -180,6 +185,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
     });
 
     expect(result.isErr()).toBe(true);
@@ -198,6 +204,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
     });
 
     const error = result.match(
@@ -216,6 +223,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
       paymentMethodType: 'CARD',
       paymentMethodData: {},
     });
@@ -236,6 +244,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
       paymentMethodType: 'CARD',
       paymentMethodData: {
         cardNumber: '4242424242424242',
@@ -279,6 +288,7 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      customerEmail,
       paymentMethodType: 'NEQUI',
       paymentMethodData: {
         phoneNumber: '3991111111',
@@ -290,6 +300,7 @@ describe('CreateOrderUseCase', () => {
       orderReference: expect.any(String),
       amountInCents: baseProduct.priceInCents,
       currency: baseProduct.currency,
+      customerEmail,
       paymentMethod: {
         type: 'NEQUI',
         phoneNumber: '3991111111',

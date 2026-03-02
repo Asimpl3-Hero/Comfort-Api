@@ -16,7 +16,6 @@ describe('WompiAdapter', () => {
       wompiPublicKey: 'public-key',
       wompiIntegritySecret: 'integrity-secret',
       wompiAcceptanceToken: 'acceptance-token',
-      wompiCustomerEmail: 'sandbox.user@comfort-api.local',
       ...overrides,
     }) as unknown as AppConfigService;
 
@@ -62,6 +61,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'CARD',
         cardToken: 'tok_test_123',
@@ -79,6 +79,7 @@ describe('WompiAdapter', () => {
     );
     const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
     expect(body.signature).toBeDefined();
+    expect(body.customer_email).toBe('buyer@example.com');
   });
 
   it('returns VALIDATION_ERROR when cardToken is missing for CARD', async () => {
@@ -89,6 +90,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-2',
       amountInCents: 2500,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'CARD',
       } as any,
@@ -118,6 +120,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'CARD',
         cardToken: 'tok_test_123',
@@ -138,6 +141,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-1',
       amountInCents: 1000,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'CARD',
         cardToken: 'tok_test_123',
@@ -175,6 +179,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-3',
       amountInCents: 1000,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'CARD',
         cardToken: 'tok_test_123',
@@ -246,6 +251,7 @@ describe('WompiAdapter', () => {
       orderReference: 'ref-nequi',
       amountInCents: 1000,
       currency: 'COP',
+      customerEmail: 'buyer@example.com',
       paymentMethod: {
         type: 'NEQUI',
         phoneNumber: '3991111111',

@@ -49,6 +49,7 @@ export interface CreateWompiTransactionInput {
   orderReference: string;
   amountInCents: number;
   currency: string;
+  customerEmail: string;
   paymentMethod: PaymentMethodInput;
 }
 

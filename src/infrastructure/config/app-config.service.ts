@@ -29,10 +29,6 @@ export class AppConfigService {
     return this.getOptional('WOMPI_ACCEPTANCE_TOKEN');
   }
 
-  public get wompiCustomerEmail(): string {
-    return this.getOrThrow('WOMPI_CUSTOMER_EMAIL');
-  }
-
   private getOrThrow(key: string): string {
     const value = this.configService.get<string>(key);
 
