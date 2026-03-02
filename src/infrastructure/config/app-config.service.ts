@@ -21,12 +21,12 @@ export class AppConfigService {
     return this.getOrThrow('WOMPI_PRIVATE_KEY');
   }
 
-  public get wompiAcceptanceToken(): string {
-    return this.getOrThrow('WOMPI_ACCEPTANCE_TOKEN');
+  public get wompiAcceptanceToken(): string | undefined {
+    return this.getOptional('WOMPI_ACCEPTANCE_TOKEN');
   }
 
-  public get wompiSandboxCardToken(): string {
-    return this.getOrThrow('WOMPI_SANDBOX_CARD_TOKEN');
+  public get wompiSandboxCardToken(): string | undefined {
+    return this.getOptional('WOMPI_SANDBOX_CARD_TOKEN');
   }
 
   public get wompiCustomerEmail(): string {
@@ -40,6 +40,14 @@ export class AppConfigService {
       throw new Error(`Missing required environment variable: ${key}`);
     }
 
+    return value;
+  }
+
+  private getOptional(key: string): string | undefined {
+    const value = this.configService.get<string>(key);
+    if (!value || value.trim() === '') {
+      return undefined;
+    }
     return value;
   }
 }

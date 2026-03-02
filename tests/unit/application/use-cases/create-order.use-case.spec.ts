@@ -105,6 +105,9 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      paymentMethodData: {
+        cardToken: 'tok_test_card_123',
+      },
     });
 
     expect(result.isOk()).toBe(true);
@@ -124,6 +127,8 @@ describe('CreateOrderUseCase', () => {
       currency: baseProduct.currency,
       paymentMethod: {
         type: 'CARD',
+        cardToken: 'tok_test_card_123',
+        installments: 1,
       },
     });
     expect(orderRepository.createPending).toHaveBeenCalledWith({
@@ -152,6 +157,9 @@ describe('CreateOrderUseCase', () => {
 
     const result = await useCase.execute({
       productId: baseProduct.id,
+      paymentMethodData: {
+        cardToken: 'tok_test_card_123',
+      },
     });
 
     expect(result.isErr()).toBe(true);
@@ -197,6 +205,26 @@ describe('CreateOrderUseCase', () => {
 
     expect(result.isErr()).toBe(true);
     expect(error?.code).toBe('OUT_OF_STOCK');
+    expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns VALIDATION_ERROR for CARD when neither token nor card data are provided', async () => {
+    const { useCase, productRepository, paymentGateway } = createMocks();
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+      paymentMethodType: 'CARD',
+      paymentMethodData: {},
+    });
+
+    const error = result.match(
+      () => null,
+      (value) => value,
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(error?.code).toBe('VALIDATION_ERROR');
     expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
   });
 

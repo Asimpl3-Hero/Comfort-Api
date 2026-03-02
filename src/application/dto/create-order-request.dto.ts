@@ -3,6 +3,7 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  Matches,
   IsString,
   IsUUID,
   Max,
@@ -12,6 +13,33 @@ import {
 import { PAYMENT_METHOD_TYPES } from '../../domain/ports/payment-gateway.port';
 
 export class PaymentMethodDataDto {
+  @IsOptional()
+  @IsString()
+  public cardToken?: string;
+
+  @IsOptional()
+  @IsString()
+  public cardNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{3,4}$/)
+  public cardCvc?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{1,2}$/)
+  public cardExpMonth?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}$/)
+  public cardExpYear?: string;
+
+  @IsOptional()
+  @IsString()
+  public cardHolder?: string;
+
   @IsOptional()
   @IsString()
   public phoneNumber?: string;

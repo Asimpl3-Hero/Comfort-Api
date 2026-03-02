@@ -26,6 +26,9 @@ describe('Order Flow Integration', () => {
 
     const createResult = await createOrderUseCase.execute({
       productId: product.id,
+      paymentMethodData: {
+        cardToken: 'tok_test_card_123',
+      },
     });
 
     expect(createResult.isOk()).toBe(true);

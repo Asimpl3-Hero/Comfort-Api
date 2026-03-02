@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-comfort_api}?schema=public"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@comfort-api-db:5432/${POSTGRES_DB:-comfort_api}?schema=public"
       FORCE_HTTPS: ${FORCE_HTTPS:-true}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-120}
@@ -53,7 +53,7 @@ services:
     container_name: comfort-api-seed
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-comfort_api}?schema=public"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@comfort-api-db:5432/${POSTGRES_DB:-comfort_api}?schema=public"
     depends_on:
       db:
         condition: service_healthy

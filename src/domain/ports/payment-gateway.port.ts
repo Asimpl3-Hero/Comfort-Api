@@ -13,8 +13,19 @@ export const PAYMENT_METHOD_TYPES = [
 
 export type PaymentMethodType = (typeof PAYMENT_METHOD_TYPES)[number];
 
+export interface CardDataInput {
+  number: string;
+  cvc: string;
+  expMonth: string;
+  expYear: string;
+  cardHolder: string;
+}
+
 export interface CardPaymentMethodInput {
   type: 'CARD';
+  cardToken?: string;
+  cardData?: CardDataInput;
+  installments?: number;
 }
 
 export interface NequiPaymentMethodInput {

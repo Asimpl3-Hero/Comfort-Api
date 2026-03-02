@@ -24,6 +24,12 @@ export interface CreateOrderInput {
   productId: string;
   paymentMethodType?: PaymentMethodType;
   paymentMethodData?: {
+    cardToken?: string;
+    cardNumber?: string;
+    cardCvc?: string;
+    cardExpMonth?: string;
+    cardExpYear?: string;
+    cardHolder?: string;
     phoneNumber?: string;
     userType?: number;
     userLegalIdType?: 'CC' | 'NIT';
@@ -135,8 +141,81 @@ export class CreateOrderUseCase {
     const data = input.paymentMethodData;
 
     if (methodType === 'CARD') {
+      const cardToken = data?.cardToken?.trim();
+      if (cardToken) {
+        return Result.ok({
+          type: 'CARD',
+          cardToken,
+          installments: 1,
+        });
+      }
+
+      const cardNumber = data?.cardNumber?.replace(/\s+/g, '');
+      const cardCvc = data?.cardCvc?.trim();
+      const cardExpMonth = data?.cardExpMonth?.trim();
+      const cardExpYear = data?.cardExpYear?.trim();
+      const cardHolder = data?.cardHolder?.trim();
+
+      const hasCardData = Boolean(
+        cardNumber && cardCvc && cardExpMonth && cardExpYear && cardHolder,
+      );
+      if (!hasCardData) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message:
+            'CARD payment requires paymentMethodData.cardToken or full card data.',
+        });
+      }
+
+      if (!cardNumber || !/^\d{13,19}$/.test(cardNumber)) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardNumber must contain 13 to 19 digits.',
+        });
+      }
+      if (!cardCvc || !/^\d{3,4}$/.test(cardCvc)) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardCvc must contain 3 or 4 digits.',
+        });
+      }
+      if (!cardExpMonth) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardExpMonth is required.',
+        });
+      }
+
+      const month = Number(cardExpMonth);
+      if (!Number.isInteger(month) || month < 1 || month > 12) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardExpMonth must be between 1 and 12.',
+        });
+      }
+      if (!cardExpYear || !/^\d{2}$/.test(cardExpYear)) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardExpYear must contain 2 digits.',
+        });
+      }
+      if (!cardHolder) {
+        return err({
+          code: 'VALIDATION_ERROR',
+          message: 'CARD cardHolder is required.',
+        });
+      }
+
       return Result.ok({
         type: 'CARD',
+        cardData: {
+          number: cardNumber,
+          cvc: cardCvc,
+          expMonth: cardExpMonth.padStart(2, '0'),
+          expYear: cardExpYear,
+          cardHolder,
+        },
+        installments: 1,
       });
     }
 
