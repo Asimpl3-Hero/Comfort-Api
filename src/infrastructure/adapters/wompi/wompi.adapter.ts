@@ -30,6 +30,11 @@ interface WompiCreateTransactionResponse {
 interface WompiGetTransactionResponse {
   data?: {
     status?: string;
+    payment_method?: {
+      extra?: {
+        async_payment_url?: string;
+      };
+    };
   };
 }
 
@@ -105,10 +110,18 @@ export class WompiAdapter implements PaymentGatewayPort {
       });
     }
 
-    const checkoutUrl =
+    let checkoutUrl =
       responseData.data?.checkout_url ??
       responseData.data?.payment_method?.extra?.async_payment_url ??
       null;
+
+    if (!checkoutUrl && input.paymentMethod.type === 'BANCOLOMBIA_TRANSFER') {
+      const asyncUrlResult =
+        await this.getBancolombiaAsyncPaymentUrl(transactionId);
+      if (asyncUrlResult.isOk()) {
+        checkoutUrl = (asyncUrlResult as Ok<string | null>).value;
+      }
+    }
 
     return ok({
       transactionId,
@@ -143,5 +156,26 @@ export class WompiAdapter implements PaymentGatewayPort {
       providerStatus,
       orderStatus,
     });
+  }
+
+  private async getBancolombiaAsyncPaymentUrl(
+    transactionId: string,
+  ): Promise<Result<string | null, AppError>> {
+    const responseResult =
+      await this.wompiHttpClient.request<WompiGetTransactionResponse>(
+        `/transactions/${transactionId}`,
+        {
+          method: 'GET',
+        },
+        'private',
+      );
+
+    if (responseResult.isErr()) {
+      return responseResult;
+    }
+
+    const responseData = (responseResult as Ok<WompiGetTransactionResponse>)
+      .value;
+    return ok(responseData.data?.payment_method?.extra?.async_payment_url ?? null);
   }
 }

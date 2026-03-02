@@ -45,6 +45,7 @@ export class WompiPaymentMethodMapper {
 
     return ok({
       type: 'BANCOLOMBIA_TRANSFER',
+      user_type: 'PERSON',
       payment_description: input.paymentDescription,
       ...(input.sandboxStatus ? { sandbox_status: input.sandboxStatus } : {}),
     });

@@ -65,6 +65,7 @@ describe('WompiPaymentMethodMapper', () => {
     );
     expect(value).toEqual({
       type: 'BANCOLOMBIA_TRANSFER',
+      user_type: 'PERSON',
       payment_description: 'Pago',
       sandbox_status: 'APPROVED',
     });

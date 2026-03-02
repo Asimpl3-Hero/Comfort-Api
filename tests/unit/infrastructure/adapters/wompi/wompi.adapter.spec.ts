@@ -266,4 +266,56 @@ describe('WompiAdapter', () => {
       }),
     );
   });
+
+  it('resolves Bancolombia async payment URL from GET transaction when create response does not include it', async () => {
+    const adapter = buildAdapter();
+    const fetchSpy = jest.spyOn(global, 'fetch');
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 'tx-banco', status: 'PENDING' } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            status: 'PENDING',
+            payment_method: {
+              extra: {
+                async_payment_url: 'https://sandbox.wompi.dev/async/tx-banco',
+              },
+            },
+          },
+        }),
+      } as Response);
+
+    const result = await adapter.createTransaction({
+      orderReference: 'ref-banco',
+      amountInCents: 1000,
+      currency: 'COP',
+      customerEmail: 'buyer@example.com',
+      paymentMethod: {
+        type: 'BANCOLOMBIA_TRANSFER',
+        paymentDescription: 'Pago Comfort',
+        sandboxStatus: 'APPROVED',
+      },
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    const firstCallBody = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(firstCallBody.payment_method).toEqual(
+      expect.objectContaining({
+        type: 'BANCOLOMBIA_TRANSFER',
+        user_type: 'PERSON',
+        payment_description: 'Pago Comfort',
+        sandbox_status: 'APPROVED',
+      }),
+    );
+    const value = result.match(
+      (okValue) => okValue,
+      () => null,
+    );
+    expect(value?.checkoutUrl).toBe('https://sandbox.wompi.dev/async/tx-banco');
+  });
 });

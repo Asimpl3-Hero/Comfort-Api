@@ -1,311 +1,110 @@
-﻿# Comfort API
+# Comfort API
 
-Production-ready backend API built with NestJS + TypeScript, using Hexagonal Architecture (Ports & Adapters), Railway Oriented Programming (ROP), Prisma, PostgreSQL, and Wompi sandbox integration.
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+![Jest](https://img.shields.io/badge/Tests-Jest-C21325?logo=jest&logoColor=white)
 
-## 1. Step-by-step implementation guide
+Backend de **Comfort** construido con NestJS + TypeScript, arquitectura hexagonal (Ports & Adapters), ROP con `Result<T, E>`, PostgreSQL y Prisma.  
+Integra una **pasarela de pago** en modo sandbox y polling de ordenes.
 
-1. Build domain and application layers first.
-   - Define entities, value objects, domain services.
-   - Define ports as interfaces/tokens.
-   - Implement use cases returning `Result<T, E>`.
-2. Implement infrastructure adapters.
-   - Prisma adapters for repository ports.
-   - Wompi adapter for payment port.
-   - Background polling service for transaction lifecycle.
-3. Implement thin HTTP controllers.
-   - Controllers only orchestrate use cases.
-   - Controllers map `Result` to HTTP responses.
-4. Configure environment and persistence.
-   - `ConfigModule` for all env vars.
-   - Prisma schema, push, generate, seed.
-5. Add quality gates.
-   - Unit tests for use case behavior with mocked ports.
-   - Validation pipe and DTO validation.
+## ✨ Que incluye
 
-## 2. Full folder structure
+- 📦 Catalogo de productos (`GET /products`) con seed inicial
+- 🧾 Creacion de ordenes (`POST /orders`) y consulta por id (`GET /orders/:id`)
+- ❤️ Healthcheck (`GET /health`)
+- 🔁 Polling en segundo plano cada 5s hasta estado final o timeout
+- 🔐 Hardening basico: headers de seguridad, rate limit, HTTPS opcional
+
+## 🧱 Arquitectura
 
 ```text
 src/
-├── domain/
-│   ├── entities/
-│   │   ├── order.entity.ts
-│   │   └── product.entity.ts
-│   ├── value-objects/
-│   │   └── money.vo.ts
-│   ├── ports/
-│   │   ├── order-repository.port.ts
-│   │   ├── order-status-polling.port.ts
-│   │   ├── payment-gateway.port.ts
-│   │   └── product-repository.port.ts
-│   └── services/
-│       └── order-status.service.ts
-├── application/
-│   ├── use-cases/
-│   │   ├── create-order.use-case.ts
-│   │   ├── get-order-by-id.use-case.ts
-│   │   └── get-products.use-case.ts
-│   └── dto/
-│       ├── create-order-request.dto.ts
-│       └── order-created-response.dto.ts
-├── infrastructure/
-│   ├── adapters/
-│   │   ├── persistence/
-│   │   │   ├── prisma-order.repository.adapter.ts
-│   │   │   ├── prisma-product.repository.adapter.ts
-│   │   │   └── prisma.service.ts
-│   │   ├── wompi/
-│   │   │   ├── wompi.adapter.ts
-│   │   │   └── wompi-order-status-polling.service.ts
-│   │   └── http/
-│   │       ├── docs/
-│   │       │   └── swagger.schemas.ts
-│   │       ├── http-error.mapper.ts
-│   │       ├── health.controller.ts
-│   │       ├── orders.controller.ts
-│   │       └── products.controller.ts
-│   └── config/
-│       └── app-config.service.ts
-├── shared/
-│   ├── errors/
-│   │   └── app-error.ts
-│   └── railway/
-│       ├── index.ts
-│       └── result.ts
-├── app.module.ts
+├── domain/            # Entidades, value objects, puertos, servicios de dominio
+├── application/       # Use cases + DTOs + servicios de aplicacion
+├── infrastructure/    # Adapters (HTTP, persistencia, pasarela), config
+├── shared/            # Result (ROP), errores compartidos
 └── main.ts
-
-prisma/
-├── schema.prisma
-└── seed.ts
 ```
 
-## 3. Core files implementation
+Reglas aplicadas:
 
-- `shared/railway/result.ts`
-  - Provides `Ok`, `Err`, `map`, `flatMap`, `match`, `isOk`, `isErr`.
-  - All use cases and adapters communicate failures without throwing business exceptions.
-- `application/use-cases/create-order.use-case.ts`
-  - Fetches product, validates money, creates Wompi transaction, persists order as `PENDING`, starts background polling.
-- `infrastructure/adapters/wompi/wompi-order-status-polling.service.ts`
-  - Polls every 5 seconds and updates order state until `APPROVED`, `DECLINED`, or 60-second timeout.
-- `infrastructure/adapters/http/*.controller.ts`
-  - Controllers only orchestrate use cases and map `Result` to HTTP responses.
-- `infrastructure/adapters/http/docs/swagger.schemas.ts`
-  - OpenAPI schemas are defined in infrastructure to avoid coupling domain/application with Swagger decorators.
+- Controladores sin logica de negocio
+- Inversion de dependencias con puertos
+- Dominio desacoplado de infraestructura
 
-## 4. Prisma schema (data model)
+## 🗃️ Modelo de datos
 
-Models:
+- `products`: `id`, `name`, `description`, `price_in_cents`, `currency`, `stock`, `image_url`, `created_at`
+- `orders`: `id`, `product_id`, `amount_in_cents`, `currency`, `wompi_transaction_id`, `status`, `created_at`
 
-- `products`
-  - `id` uuid
-  - `name`
-  - `description`
-  - `price_in_cents`
-  - `currency`
-  - `created_at`
-- `orders`
-  - `id` uuid
-  - `product_id` FK -> `products.id`
-  - `amount_in_cents`
-  - `currency`
-  - `wompi_transaction_id`
-  - `status` (`PENDING | APPROVED | DECLINED`)
-  - `created_at`
+Archivo: `prisma/schema.prisma`  
+Seed: `prisma/seed.ts` (10 productos dummy).
 
-Schema file: `prisma/schema.prisma`.
+## 🔌 Endpoints
 
-## 5. Seed script
+- `GET /health`
+- `GET /products`
+- `POST /orders`
+- `GET /orders/:id`
 
-Seed file: `prisma/seed.ts`
+Swagger:
 
-- Deletes existing orders/products.
-- Inserts 10 dummy products.
-- No API endpoint exists to create products.
+- URL: `http://localhost:3001/docs`
+- Variables: `SWAGGER_ENABLED`, `SWAGGER_PATH`
 
-Run:
+## ⚙️ Variables de entorno
 
-```bash
-npm run prisma:seed
-```
-
-## 6. Wompi integration (sandbox only)
-
-Configured to use sandbox:
-
-- Base URL: `https://api-sandbox.co.uat.wompi.dev/v1`
-- Public key: `pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7`
-- Private key: `prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg`
-- Integrity secret: `stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp` (`WOMPI_INTEGRITY_SECRET`)
-- Acceptance token: from Wompi sandbox merchant terms (`WOMPI_ACCEPTANCE_TOKEN`)
-- Card token: must be generated in frontend with Wompi sandbox `POST /tokens/cards` and sent as `paymentMethodData.cardToken`
-- Customer email: must be sent by frontend in `POST /orders` as `customerEmail`
-
-`WompiAdapter` responsibilities:
-
-- Create transaction (`POST /transactions`).
-- Poll transaction status (`GET /transactions/:id`).
-- Convert provider status into domain order status through `OrderStatusService`.
-
-## 7. Polling strategy
-
-After `POST /orders`:
-
-1. Save order as `PENDING`.
-2. Start background polling every 5 seconds.
-3. Stop polling when:
-   - status becomes `APPROVED`, or
-   - status becomes `DECLINED`, or
-   - 60 seconds elapsed.
-4. Persist final status in DB.
-
-No webhooks are used.
-
-## 8. API endpoints
-
-### `GET /health`
-
-Returns API liveness status for ops/monitoring.
-
-### `GET /products`
-
-Returns seeded products.
-
-### `POST /orders`
-
-Body:
-
-```json
-{
-  "productId": "uuid",
-  "customerEmail": "buyer@example.com",
-  "paymentMethodType": "CARD",
-  "paymentMethodData": {
-    "cardToken": "tok_test_123"
-  }
-}
-```
-
-Response:
-
-```json
-{
-  "orderId": "uuid",
-  "checkoutUrl": "https://checkout.wompi.co/p/?...",
-  "status": "PENDING"
-}
-```
-
-### `GET /orders/:id`
-
-Returns current order status and order data.
-
-## 8.1 Swagger documentation
-
-Swagger is configured in `main.ts` and documented at controller level (infrastructure layer).
-
-- Default URL: `http://localhost:3000/docs`
-- Configurable by env:
-  - `SWAGGER_ENABLED` (`true` | `false`)
-  - `SWAGGER_PATH` (default: `docs`)
-
-## 9. Environment variables
-
-Use `.env.example` as template:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/comfort_api?schema=public"
-NODE_ENV="development"
-FORCE_HTTPS="false"
-RATE_LIMIT_WINDOW_MS="60000"
-RATE_LIMIT_MAX_REQUESTS="120"
-CORS_ORIGINS="http://localhost:5173"
-SWAGGER_ENABLED="true"
-SWAGGER_PATH="docs"
-WOMPI_BASE_URL="https://api-sandbox.co.uat.wompi.dev/v1"
-WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
-WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
-WOMPI_INTEGRITY_SECRET="stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp"
-WOMPI_ACCEPTANCE_TOKEN="acceptance_token_from_wompi_sandbox"
-```
-
-## 10. Security baseline (OWASP aligned)
-
-- Security headers via `helmet` (e.g. `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`).
-- Express hardening: `x-powered-by` disabled.
-- Request throttling via `express-rate-limit`.
-- Optional HTTPS enforcement (`FORCE_HTTPS=true`) with 301 redirect for non-HTTPS requests behind proxy.
-
-## 11. Commands to run
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-2. Create local env:
+Usa `.env.example` como base:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Generate Prisma client:
+Variables clave:
+
+- DB: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`
+- API: `PORT`, `HOST_PORT`, `CORS_ORIGINS`, `FORCE_HTTPS`
+- Pasarela de pago: `WOMPI_BASE_URL`, `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_INTEGRITY_SECRET`, `WOMPI_ACCEPTANCE_TOKEN`
+
+## 🚀 Levantar backend (local)
 
 ```bash
+npm install
 npm run prisma:generate
-```
-
-4. Push schema to PostgreSQL:
-
-```bash
 npm run prisma:push
-```
-
-5. Seed products:
-
-```bash
 npm run prisma:seed
-```
-
-6. Start API:
-
-```bash
 npm run start:dev
 ```
 
-Swagger UI:
-
-```bash
-http://localhost:3000/docs
-```
-
-7. Run tests:
-
-```bash
-npm run test
-```
-
-## 12. Run with Docker
-
-1. Build and start PostgreSQL + API:
+## 🐳 Levantar backend con Docker
 
 ```bash
 docker compose up --build -d
-```
-
-2. Seed dummy products (optional, one-shot service):
-
-```bash
 docker compose --profile seed run --rm seed
 ```
 
-3. Check API health manually:
+Healthcheck:
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3001/health
+doc  https://comfort-api.ondeploy.store/docs
 ```
 
-Notes:
-- The API container runs Prisma `generate` + `db push` on startup.
-- In Docker, `DATABASE_URL` is overridden to use host `db` from compose.
+## 🧪 Pruebas unitarias
+
+Backend:
+
+```bash
+npm run test
+npm run test:cov
+```
+
+Cobertura actual (Jest):
+
+- Statements: **94.71%**
+- Branches: **83.07%**
+- Functions: **95.45%**
+- Lines: **94.45%**
