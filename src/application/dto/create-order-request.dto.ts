@@ -3,7 +3,6 @@ import {
   IsIn,
   IsInt,
   IsOptional,
-  Matches,
   IsString,
   IsUUID,
   Max,
@@ -16,29 +15,6 @@ export class PaymentMethodDataDto {
   @IsOptional()
   @IsString()
   public cardToken?: string;
-
-  @IsOptional()
-  @IsString()
-  public cardNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{3,4}$/)
-  public cardCvc?: string;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{1,2}$/)
-  public cardExpMonth?: string;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{2}$/)
-  public cardExpYear?: string;
-
-  @IsOptional()
-  @IsString()
-  public cardHolder?: string;
 
   @IsOptional()
   @IsString()

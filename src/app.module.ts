@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CreateOrderUseCase } from './application/use-cases/create-order.use-case';
 import { GetOrderByIdUseCase } from './application/use-cases/get-order-by-id.use-case';
 import { GetProductsUseCase } from './application/use-cases/get-products.use-case';
+import { CreateOrderPaymentMethodResolver } from './application/services/create-order-payment-method.resolver';
 import { OrderStatusService } from './domain/services/order-status.service';
 import { ProductsController } from './infrastructure/adapters/http/products.controller';
 import { OrdersController } from './infrastructure/adapters/http/orders.controller';
@@ -10,8 +11,12 @@ import { HealthController } from './infrastructure/adapters/http/health.controll
 import { PrismaOrderRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-order.repository.adapter';
 import { PrismaProductRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-product.repository.adapter';
 import { PrismaService } from './infrastructure/adapters/persistence/prisma.service';
+import { WompiAcceptanceTokenService } from './infrastructure/adapters/wompi/wompi-acceptance-token.service';
 import { WompiOrderStatusPollingService } from './infrastructure/adapters/wompi/wompi-order-status-polling.service';
 import { WompiAdapter } from './infrastructure/adapters/wompi/wompi.adapter';
+import { WompiHttpClient } from './infrastructure/adapters/wompi/wompi-http.client';
+import { WompiIntegritySignatureService } from './infrastructure/adapters/wompi/wompi-integrity-signature.service';
+import { WompiPaymentMethodMapper } from './infrastructure/adapters/wompi/wompi-payment-method.mapper';
 import { AppConfigService } from './infrastructure/config/app-config.service';
 import { PRODUCT_REPOSITORY_PORT } from './domain/ports/product-repository.port';
 import { ORDER_REPOSITORY_PORT } from './domain/ports/order-repository.port';
@@ -28,6 +33,11 @@ import { ORDER_STATUS_POLLING_PORT } from './domain/ports/order-status-polling.p
   providers: [
     AppConfigService,
     PrismaService,
+    WompiHttpClient,
+    WompiAcceptanceTokenService,
+    WompiPaymentMethodMapper,
+    WompiIntegritySignatureService,
+    CreateOrderPaymentMethodResolver,
     CreateOrderUseCase,
     GetProductsUseCase,
     GetOrderByIdUseCase,

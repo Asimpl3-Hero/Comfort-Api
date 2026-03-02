@@ -1,4 +1,5 @@
 import { CreateOrderUseCase } from '../../../src/application/use-cases/create-order.use-case';
+import { CreateOrderPaymentMethodResolver } from '../../../src/application/services/create-order-payment-method.resolver';
 import { GetOrderByIdUseCase } from '../../../src/application/use-cases/get-order-by-id.use-case';
 import { buildProduct } from '../../helpers/factories/order.factory';
 import {
@@ -21,6 +22,7 @@ describe('Order Flow Integration', () => {
       orderRepository,
       paymentGateway,
       pollingService,
+      new CreateOrderPaymentMethodResolver(),
     );
     const getOrderByIdUseCase = new GetOrderByIdUseCase(orderRepository);
 
@@ -64,6 +66,7 @@ describe('Order Flow Integration', () => {
       orderRepository,
       paymentGateway,
       pollingService,
+      new CreateOrderPaymentMethodResolver(),
     );
 
     const result = await createOrderUseCase.execute({

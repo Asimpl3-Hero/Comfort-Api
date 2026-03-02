@@ -12,15 +12,15 @@ describe('AppConfigService', () => {
     expect(service.wompiBaseUrl).toBe('WOMPI_BASE_URL_VALUE');
     expect(service.wompiPublicKey).toBe('WOMPI_PUBLIC_KEY_VALUE');
     expect(service.wompiPrivateKey).toBe('WOMPI_PRIVATE_KEY_VALUE');
+    expect(service.wompiIntegritySecret).toBe('WOMPI_INTEGRITY_SECRET_VALUE');
     expect(service.wompiAcceptanceToken).toBe('WOMPI_ACCEPTANCE_TOKEN_VALUE');
-    expect(service.wompiSandboxCardToken).toBe('WOMPI_SANDBOX_CARD_TOKEN_VALUE');
     expect(service.wompiCustomerEmail).toBe('WOMPI_CUSTOMER_EMAIL_VALUE');
   });
 
   it('returns undefined for optional keys when missing', () => {
     const configService = {
       get: jest.fn((key: string) => {
-        if (key === 'WOMPI_ACCEPTANCE_TOKEN' || key === 'WOMPI_SANDBOX_CARD_TOKEN') {
+        if (key === 'WOMPI_ACCEPTANCE_TOKEN') {
           return undefined;
         }
         return `${key}_VALUE`;
@@ -29,7 +29,6 @@ describe('AppConfigService', () => {
     const service = new AppConfigService(configService);
 
     expect(service.wompiAcceptanceToken).toBeUndefined();
-    expect(service.wompiSandboxCardToken).toBeUndefined();
   });
 
   it('throws when a required key is missing', () => {

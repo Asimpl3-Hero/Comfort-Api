@@ -21,12 +21,12 @@ export class AppConfigService {
     return this.getOrThrow('WOMPI_PRIVATE_KEY');
   }
 
-  public get wompiAcceptanceToken(): string | undefined {
-    return this.getOptional('WOMPI_ACCEPTANCE_TOKEN');
+  public get wompiIntegritySecret(): string {
+    return this.getOrThrow('WOMPI_INTEGRITY_SECRET');
   }
 
-  public get wompiSandboxCardToken(): string | undefined {
-    return this.getOptional('WOMPI_SANDBOX_CARD_TOKEN');
+  public get wompiAcceptanceToken(): string | undefined {
+    return this.getOptional('WOMPI_ACCEPTANCE_TOKEN');
   }
 
   public get wompiCustomerEmail(): string {

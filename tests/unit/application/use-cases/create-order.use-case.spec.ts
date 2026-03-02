@@ -1,4 +1,5 @@
 import { CreateOrderUseCase } from '../../../../src/application/use-cases/create-order.use-case';
+import { CreateOrderPaymentMethodResolver } from '../../../../src/application/services/create-order-payment-method.resolver';
 import type { ProductRepositoryPort } from '../../../../src/domain/ports/product-repository.port';
 import type { OrderRepositoryPort } from '../../../../src/domain/ports/order-repository.port';
 import type { PaymentGatewayPort } from '../../../../src/domain/ports/payment-gateway.port';
@@ -54,6 +55,7 @@ describe('CreateOrderUseCase', () => {
       orderRepository,
       paymentGateway,
       pollingService,
+      new CreateOrderPaymentMethodResolver(),
     );
 
     return {
@@ -208,7 +210,7 @@ describe('CreateOrderUseCase', () => {
     expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
   });
 
-  it('returns VALIDATION_ERROR for CARD when neither token nor card data are provided', async () => {
+  it('returns VALIDATION_ERROR for CARD when cardToken is not provided', async () => {
     const { useCase, productRepository, paymentGateway } = createMocks();
     productRepository.findById.mockResolvedValue(ok(baseProduct));
 
@@ -225,6 +227,33 @@ describe('CreateOrderUseCase', () => {
 
     expect(result.isErr()).toBe(true);
     expect(error?.code).toBe('VALIDATION_ERROR');
+    expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects raw card fields for CARD and requires cardToken', async () => {
+    const { useCase, productRepository, paymentGateway } = createMocks();
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+      paymentMethodType: 'CARD',
+      paymentMethodData: {
+        cardNumber: '4242424242424242',
+        cardCvc: '123',
+        cardExpMonth: '12',
+        cardExpYear: '29',
+        cardHolder: 'Sandbox User',
+      } as any,
+    });
+
+    const error = result.match(
+      () => null,
+      (value) => value,
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(error?.code).toBe('VALIDATION_ERROR');
+    expect(error?.message).toContain('cardToken');
     expect(paymentGateway.createTransaction).not.toHaveBeenCalled();
   });
 

@@ -128,4 +128,17 @@ describe('ProductsController (e2e)', () => {
       .send({ productId: 'not-a-uuid' })
       .expect(400);
   });
+
+  it('/orders (POST) should reject raw card fields and require cardToken for CARD', () => {
+    return request(app.getHttpServer())
+      .post('/orders')
+      .send({
+        productId: '53ca8c5d-8e2b-4740-aa07-f5d5f42d2554',
+        paymentMethodType: 'CARD',
+        paymentMethodData: {
+          cardNumber: '4242424242424242',
+        },
+      })
+      .expect(400);
+  });
 });

@@ -1,5 +1,9 @@
 import { OrderStatusService } from '../../../../../src/domain/services/order-status.service';
+import { WompiAcceptanceTokenService } from '../../../../../src/infrastructure/adapters/wompi/wompi-acceptance-token.service';
 import { WompiAdapter } from '../../../../../src/infrastructure/adapters/wompi/wompi.adapter';
+import { WompiHttpClient } from '../../../../../src/infrastructure/adapters/wompi/wompi-http.client';
+import { WompiIntegritySignatureService } from '../../../../../src/infrastructure/adapters/wompi/wompi-integrity-signature.service';
+import { WompiPaymentMethodMapper } from '../../../../../src/infrastructure/adapters/wompi/wompi-payment-method.mapper';
 import { AppConfigService } from '../../../../../src/infrastructure/config/app-config.service';
 
 describe('WompiAdapter', () => {
@@ -10,18 +14,39 @@ describe('WompiAdapter', () => {
       wompiBaseUrl: 'https://api-sandbox.co.uat.wompi.dev/v1',
       wompiPrivateKey: 'private-key',
       wompiPublicKey: 'public-key',
+      wompiIntegritySecret: 'integrity-secret',
       wompiAcceptanceToken: 'acceptance-token',
-      wompiSandboxCardToken: undefined,
       wompiCustomerEmail: 'sandbox.user@comfort-api.local',
       ...overrides,
     }) as unknown as AppConfigService;
+
+  const buildAdapter = (
+    overrides: Partial<AppConfigService> = {},
+  ): WompiAdapter => {
+    const config = buildConfig(overrides);
+    const httpClient = new WompiHttpClient(config);
+    const acceptanceTokenService = new WompiAcceptanceTokenService(
+      config,
+      httpClient,
+    );
+    const paymentMethodMapper = new WompiPaymentMethodMapper();
+    const signatureService = new WompiIntegritySignatureService(config);
+    return new WompiAdapter(
+      config,
+      new OrderStatusService(),
+      httpClient,
+      acceptanceTokenService,
+      paymentMethodMapper,
+      signatureService,
+    );
+  };
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   it('creates transaction when provider responds with id and checkout_url', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -52,20 +77,13 @@ describe('WompiAdapter', () => {
         }),
       }),
     );
+    const body = JSON.parse(String(fetchSpy.mock.calls[0][1]?.body));
+    expect(body.signature).toBeDefined();
   });
 
-  it('tokenizes card data before creating transaction when cardToken is not provided', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+  it('returns VALIDATION_ERROR when cardToken is missing for CARD', async () => {
+    const adapter = buildAdapter();
     const fetchSpy = jest.spyOn(global, 'fetch');
-    fetchSpy
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 'tok_generated_1' } }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 'tx2', status: 'PENDING' } }),
-      } as Response);
 
     const result = await adapter.createTransaction({
       orderReference: 'ref-2',
@@ -73,35 +91,22 @@ describe('WompiAdapter', () => {
       currency: 'COP',
       paymentMethod: {
         type: 'CARD',
-        cardData: {
-          number: '4242424242424242',
-          cvc: '123',
-          expMonth: '12',
-          expYear: '29',
-          cardHolder: 'Sandbox User',
-        },
-      },
+      } as any,
     });
 
-    expect(result.isOk()).toBe(true);
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining('/tokens/cards'),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer public-key',
-        }),
-      }),
+    const error = result.match(
+      () => null,
+      (value) => value,
     );
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('/transactions'),
-      expect.any(Object),
-    );
+
+    expect(result.isErr()).toBe(true);
+    expect(error?.code).toBe('VALIDATION_ERROR');
+    expect(error?.message).toContain('cardToken');
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('returns PAYMENT_PROVIDER_ERROR when transaction id is missing', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -123,7 +128,7 @@ describe('WompiAdapter', () => {
   });
 
   it('allows null checkoutUrl when provider does not return redirect URLs', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ data: { id: 'tx1', status: 'PENDING' } }),
@@ -148,12 +153,9 @@ describe('WompiAdapter', () => {
   });
 
   it('fetches acceptance token from merchant endpoint when env token is placeholder', async () => {
-    const adapter = new WompiAdapter(
-      buildConfig({
-        wompiAcceptanceToken: 'acceptance_token_from_wompi_sandbox',
-      }),
-      new OrderStatusService(),
-    );
+    const adapter = buildAdapter({
+      wompiAcceptanceToken: 'acceptance_token_from_wompi_sandbox',
+    });
     const fetchSpy = jest.spyOn(global, 'fetch');
     fetchSpy
       .mockResolvedValueOnce({
@@ -190,7 +192,7 @@ describe('WompiAdapter', () => {
   });
 
   it('maps transaction status to domain order status', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ data: { status: 'APPROVED' } }),
@@ -207,7 +209,7 @@ describe('WompiAdapter', () => {
   });
 
   it('maps 4xx provider responses to VALIDATION_ERROR', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 422,
@@ -225,7 +227,7 @@ describe('WompiAdapter', () => {
   });
 
   it('returns PAYMENT_PROVIDER_ERROR when fetch throws', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network down'));
 
     const result = await adapter.getTransactionStatus('tx1');
@@ -234,7 +236,7 @@ describe('WompiAdapter', () => {
   });
 
   it('maps NEQUI payload in direct integration', async () => {
-    const adapter = new WompiAdapter(buildConfig(), new OrderStatusService());
+    const adapter = buildAdapter();
     const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ data: { id: 'tx-nequi', status: 'PENDING' } }),

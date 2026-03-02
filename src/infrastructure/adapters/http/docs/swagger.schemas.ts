@@ -57,12 +57,12 @@ export const PRODUCTS_RESPONSE_SCHEMA = {
 export const PAYMENT_METHOD_DATA_SCHEMA = {
   type: 'object',
   properties: {
-    cardToken: { type: 'string', example: 'tok_test_123' },
-    cardNumber: { type: 'string', example: '4242424242424242' },
-    cardCvc: { type: 'string', example: '123' },
-    cardExpMonth: { type: 'string', example: '12' },
-    cardExpYear: { type: 'string', example: '29' },
-    cardHolder: { type: 'string', example: 'Sandbox User' },
+    cardToken: {
+      type: 'string',
+      example: 'tok_test_123',
+      description:
+        'Required when paymentMethodType is CARD. Must be generated on frontend via Wompi /tokens/cards.',
+    },
     phoneNumber: { type: 'string', example: '3991111111' },
     userType: { type: 'integer', enum: [0, 1], example: 0 },
     userLegalIdType: { type: 'string', enum: ['CC', 'NIT'], example: 'CC' },
@@ -82,6 +82,8 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
       type: 'string',
       enum: ['CARD', 'NEQUI', 'PSE', 'BANCOLOMBIA_TRANSFER'],
       default: 'CARD',
+      description:
+        'For CARD payments, paymentMethodData.cardToken is mandatory and raw card data is rejected.',
     },
     paymentMethodData: PAYMENT_METHOD_DATA_SCHEMA,
   },

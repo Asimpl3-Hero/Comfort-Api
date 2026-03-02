@@ -136,8 +136,9 @@ Configured to use sandbox:
 - Base URL: `https://api-sandbox.co.uat.wompi.dev/v1`
 - Public key: `pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7`
 - Private key: `prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg`
+- Integrity secret: `stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp` (`WOMPI_INTEGRITY_SECRET`)
 - Acceptance token: from Wompi sandbox merchant terms (`WOMPI_ACCEPTANCE_TOKEN`)
-- Sandbox card token: generated with Wompi test cards (`WOMPI_SANDBOX_CARD_TOKEN`)
+- Card token: must be generated in frontend with Wompi sandbox `POST /tokens/cards` and sent as `paymentMethodData.cardToken`
 
 `WompiAdapter` responsibilities:
 
@@ -175,7 +176,11 @@ Body:
 
 ```json
 {
-  "productId": "uuid"
+  "productId": "uuid",
+  "paymentMethodType": "CARD",
+  "paymentMethodData": {
+    "cardToken": "tok_test_123"
+  }
 }
 ```
 
@@ -218,8 +223,8 @@ SWAGGER_PATH="docs"
 WOMPI_BASE_URL="https://api-sandbox.co.uat.wompi.dev/v1"
 WOMPI_PUBLIC_KEY="pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7"
 WOMPI_PRIVATE_KEY="prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg"
+WOMPI_INTEGRITY_SECRET="stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp"
 WOMPI_ACCEPTANCE_TOKEN="acceptance_token_from_wompi_sandbox"
-WOMPI_SANDBOX_CARD_TOKEN="tok_test_from_wompi_sandbox"
 WOMPI_CUSTOMER_EMAIL="sandbox.user@comfort-api.local"
 ```
 
