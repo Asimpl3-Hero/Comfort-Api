@@ -22,6 +22,15 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
           amountInCents: input.amountInCents,
           currency: input.currency,
           wompiTransactionId: input.wompiTransactionId,
+          shippingFullName: input.shippingData?.fullName,
+          shippingEmail: input.shippingData?.email,
+          shippingPhone: input.shippingData?.phone,
+          shippingAddress1: input.shippingData?.address1,
+          shippingAddress2: input.shippingData?.address2,
+          shippingCity: input.shippingData?.city,
+          shippingState: input.shippingData?.state,
+          shippingZip: input.shippingData?.zip,
+          shippingCountry: input.shippingData?.country,
           status: 'PENDING',
         },
       });
@@ -103,15 +112,45 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
     amountInCents: number;
     currency: string;
     wompiTransactionId: string;
+    shippingFullName: string | null;
+    shippingEmail: string | null;
+    shippingPhone: string | null;
+    shippingAddress1: string | null;
+    shippingAddress2: string | null;
+    shippingCity: string | null;
+    shippingState: string | null;
+    shippingZip: string | null;
+    shippingCountry: string | null;
     status: string;
     createdAt: Date;
   }): Order {
+    const hasShippingData =
+      Boolean(order.shippingFullName) &&
+      Boolean(order.shippingEmail) &&
+      Boolean(order.shippingAddress1) &&
+      Boolean(order.shippingCity) &&
+      Boolean(order.shippingState) &&
+      Boolean(order.shippingZip);
+
     return {
       id: order.id,
       productId: order.productId,
       amountInCents: order.amountInCents,
       currency: order.currency,
       wompiTransactionId: order.wompiTransactionId,
+      shippingData: hasShippingData
+        ? {
+            fullName: order.shippingFullName as string,
+            email: order.shippingEmail as string,
+            phone: order.shippingPhone ?? undefined,
+            address1: order.shippingAddress1 as string,
+            address2: order.shippingAddress2 ?? undefined,
+            city: order.shippingCity as string,
+            state: order.shippingState as string,
+            zip: order.shippingZip as string,
+            country: order.shippingCountry ?? undefined,
+          }
+        : undefined,
       status: order.status as OrderStatus,
       createdAt: order.createdAt,
     };

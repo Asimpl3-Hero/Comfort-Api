@@ -1,4 +1,4 @@
-import { Order, OrderStatus } from '../entities/order.entity';
+import { Order, OrderStatus, ShippingData } from '../entities/order.entity';
 import { AppError } from '../../shared/errors/app-error';
 import { Result } from '../../shared/railway/result';
 
@@ -9,6 +9,7 @@ export interface CreatePendingOrderInput {
   amountInCents: number;
   currency: string;
   wompiTransactionId: string;
+  shippingData?: ShippingData;
 }
 
 export interface OrderRepositoryPort {

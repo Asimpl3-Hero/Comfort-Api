@@ -68,6 +68,7 @@ export class OrdersController {
     const result = await this.createOrderUseCase.execute({
       productId: body.productId,
       customerEmail: body.customerEmail,
+      shippingData: body.shippingData,
       paymentMethodType: body.paymentMethodType,
       paymentMethodData: body.paymentMethodData,
     });
@@ -117,6 +118,7 @@ export class OrdersController {
         amount_in_cents: order.amountInCents,
         currency: order.currency,
         wompi_transaction_id: order.wompiTransactionId,
+        shipping_data: order.shippingData ?? null,
         status: order.status,
         created_at: order.createdAt,
       }),

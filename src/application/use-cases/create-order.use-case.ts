@@ -14,7 +14,7 @@ import type {
   PaymentGatewayPort,
 } from '../../domain/ports/payment-gateway.port';
 import type { Product } from '../../domain/entities/product.entity';
-import type { Order } from '../../domain/entities/order.entity';
+import type { Order, ShippingData } from '../../domain/entities/order.entity';
 import { Money } from '../../domain/value-objects/money.vo';
 import { AppError } from '../../shared/errors/app-error';
 import { Ok, Result, err } from '../../shared/railway/result';
@@ -27,6 +27,7 @@ import {
 export interface CreateOrderInput {
   productId: string;
   customerEmail: string;
+  shippingData?: ShippingData;
   paymentMethodType?: PaymentMethodType;
   paymentMethodData?: CreateOrderPaymentMethodData;
 }
@@ -109,6 +110,7 @@ export class CreateOrderUseCase {
       amountInCents: money.amountInCents,
       currency: money.currency,
       wompiTransactionId: payment.transactionId,
+      shippingData: input.shippingData,
     });
     if (orderResult.isErr()) {
       return orderResult;

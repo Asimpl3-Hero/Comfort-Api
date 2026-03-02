@@ -74,6 +74,23 @@ export const PAYMENT_METHOD_DATA_SCHEMA = {
   additionalProperties: false,
 };
 
+export const SHIPPING_DATA_SCHEMA = {
+  type: 'object',
+  properties: {
+    fullName: { type: 'string', example: 'Juan Perez' },
+    email: { type: 'string', format: 'email', example: 'juan.perez@correo.co' },
+    phone: { type: 'string', example: '3001234567' },
+    address1: { type: 'string', example: 'Cra 7 #45-12' },
+    address2: { type: 'string', example: 'Apto 302' },
+    city: { type: 'string', example: 'Bogota' },
+    state: { type: 'string', example: 'Cundinamarca' },
+    zip: { type: 'string', example: '110111' },
+    country: { type: 'string', example: 'CO' },
+  },
+  required: ['fullName', 'email', 'address1', 'city', 'state', 'zip'],
+  additionalProperties: false,
+};
+
 export const CREATE_ORDER_REQUEST_SCHEMA = {
   type: 'object',
   properties: {
@@ -91,6 +108,7 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
         'For CARD payments, paymentMethodData.cardToken is mandatory and raw card data is rejected.',
     },
     paymentMethodData: PAYMENT_METHOD_DATA_SCHEMA,
+    shippingData: SHIPPING_DATA_SCHEMA,
   },
   required: ['productId', 'customerEmail'],
   additionalProperties: false,
@@ -118,6 +136,9 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
     amount_in_cents: { type: 'integer', example: 12900 },
     currency: { type: 'string', example: 'COP' },
     wompi_transaction_id: { type: 'string', example: '12345-1718123303-80111' },
+    shipping_data: {
+      oneOf: [SHIPPING_DATA_SCHEMA, { type: 'null' }],
+    },
     status: { type: 'string', enum: ['PENDING', 'APPROVED', 'DECLINED'] },
     created_at: { type: 'string', format: 'date-time' },
   },

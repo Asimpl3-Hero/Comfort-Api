@@ -49,6 +49,38 @@ export class PaymentMethodDataDto {
   public sandboxStatus?: 'APPROVED' | 'DECLINED';
 }
 
+export class ShippingDataDto {
+  @IsString()
+  public fullName!: string;
+
+  @IsEmail()
+  public email!: string;
+
+  @IsOptional()
+  @IsString()
+  public phone?: string;
+
+  @IsString()
+  public address1!: string;
+
+  @IsOptional()
+  @IsString()
+  public address2?: string;
+
+  @IsString()
+  public city!: string;
+
+  @IsString()
+  public state!: string;
+
+  @IsString()
+  public zip!: string;
+
+  @IsOptional()
+  @IsString()
+  public country?: string;
+}
+
 export class CreateOrderRequestDto {
   @IsUUID()
   public productId!: string;
@@ -64,4 +96,9 @@ export class CreateOrderRequestDto {
   @ValidateNested()
   @Type(() => PaymentMethodDataDto)
   public paymentMethodData?: PaymentMethodDataDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ShippingDataDto)
+  public shippingData?: ShippingDataDto;
 }
