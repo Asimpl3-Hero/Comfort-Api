@@ -4,28 +4,31 @@ const prisma = new PrismaClient();
 
 const products = [
   {
-    name: 'Almohada ortopÃ©dica',
+    name: 'Almohada ortopedica',
     description:
-      'Almohada de espuma viscoelÃ¡stica con soporte cervical para quienes duermen de lado',
+      'Almohada de espuma viscoelastica con soporte cervical para quienes duermen de lado',
     priceInCents: 1290000,
-    imageUrl: 'https://picsum.photos/seed/comfort-orthopedic-pillow/900/1200',
+    imageUrl:
+      'https://cdn.pixabay.com/photo/2017/02/16/10/51/pillow-2071096_1280.jpg',
     stock: 14,
     currency: 'COP',
   },
   {
     name: 'Manta ponderada',
     description:
-      'Manta calmante con peso de 7 kg con funda de algodÃ³n transpirable.',
+      'Manta calmante con peso de 7 kg con funda de algodon transpirable.',
     priceInCents: 2190000,
-    imageUrl: 'https://picsum.photos/seed/comfort-weighted-blanket/900/1200',
+    imageUrl:
+      'https://cdn.pixabay.com/photo/2017/08/06/14/42/blanket-2593141_1280.jpg',
     stock: 8,
     currency: 'COP',
   },
   {
     name: 'Silla Comfort',
-    description: 'Silla comoda con diseÃ±o relajante y artesanal.',
+    description: 'Silla comoda con diseño relajante y artesanal.',
     priceInCents: 4590000,
-    imageUrl: 'https://picsum.photos/seed/comfort-desk-chair/900/1200',
+    imageUrl:
+      'https://pixabay.com/es/images/download/daria-yakovleva-chair-4788242_1920.jpg',
     stock: 5,
     currency: 'COP',
   },
@@ -41,7 +44,7 @@ const products = [
   {
     name: 'Difusor de aromaterapia',
     description:
-      'Difusor ultrasÃ³nico con apagado automÃ¡tico y luz ambiental suave.',
+      'Difusor ultrasonico con apagado automatico y luz ambiental suave.',
     priceInCents: 1490000,
     imageUrl:
       'https://cdn.pixabay.com/photo/2019/03/24/21/30/diffuser-4078729_1280.jpg',
@@ -50,7 +53,7 @@ const products = [
   },
   {
     name: 'Juguete de Masaje',
-    description: 'Compact percussion massager with 6 speed levels.',
+    description: 'Masajeador de percusión compacto con 6 niveles de velocidad.',
     priceInCents: 2890000,
     imageUrl:
       'https://cdn.pixabay.com/photo/2023/04/12/19/58/hedgehog-ball-7921103_1280.jpg',
@@ -60,7 +63,7 @@ const products = [
   {
     name: 'Yoga Mat Pro',
     description:
-      'Alfombrilla antideslizante de 6mm con amortiguaciÃ³n de alta densidad.',
+      'Alfombrilla antideslizante de 6mm con amortiguacion de alta densidad.',
     priceInCents: 1690000,
     imageUrl:
       'https://cdn.pixabay.com/photo/2016/01/18/09/48/yoga-1146281_1280.jpg',
@@ -70,7 +73,7 @@ const products = [
   {
     name: 'Botella de agua inteligente',
     description:
-      'Botella rastreadora de hidrataciÃ³n con recordatorio LED y sincronizaciÃ³n de aplicaciones.',
+      'Botella rastreadora de hidratacion con recordatorio LED y sincronizacion de aplicaciones.',
     priceInCents: 1990000,
     imageUrl:
       'https://cdn.pixabay.com/photo/2015/08/21/00/18/water-bottle-898332_1280.jpg',
@@ -80,7 +83,7 @@ const products = [
   {
     name: 'Audifonos Sound-Cancel',
     description:
-      'Auriculares inalÃ¡mbricos con ANC hÃ­brido y 24 horas de duraciÃ³n de baterÃ­a.',
+      'Auriculares inalÃ¡mbricos con ANC hibrido y 24 horas de duracion de bater­a.',
     priceInCents: 3990000,
     imageUrl:
       'https://cdn.pixabay.com/photo/2025/02/12/09/50/headphones-9401018_1280.jpg',
