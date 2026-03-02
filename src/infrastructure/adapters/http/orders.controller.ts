@@ -67,6 +67,7 @@ export class OrdersController {
   public async createOrder(@Body() body: CreateOrderRequestDto) {
     const result = await this.createOrderUseCase.execute({
       productId: body.productId,
+      quantity: body.quantity,
       customerEmail: body.customerEmail,
       shippingData: body.shippingData,
       paymentMethodType: body.paymentMethodType,
@@ -115,6 +116,7 @@ export class OrdersController {
       (order) => ({
         id: order.id,
         product_id: order.productId,
+        quantity: order.quantity,
         amount_in_cents: order.amountInCents,
         currency: order.currency,
         wompi_transaction_id: order.wompiTransactionId,

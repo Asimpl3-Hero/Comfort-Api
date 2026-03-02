@@ -16,6 +16,7 @@ export const buildProduct = (overrides: Partial<Product> = {}): Product => ({
 export const buildOrder = (overrides: Partial<Order> = {}): Order => ({
   id: '97fb06c8-0df9-42a5-9534-732f54a08c72',
   productId: 'f8f85493-3323-46b8-a6a6-0734496d72cd',
+  quantity: 1,
   amountInCents: 12900,
   currency: 'COP',
   wompiTransactionId: 'wompi_tx_123',

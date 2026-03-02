@@ -26,6 +26,7 @@ import {
 
 export interface CreateOrderInput {
   productId: string;
+  quantity?: number;
   customerEmail: string;
   shippingData?: ShippingData;
   paymentMethodType?: PaymentMethodType;
@@ -49,6 +50,14 @@ export class CreateOrderUseCase {
   public async execute(
     input: CreateOrderInput,
   ): Promise<Result<OrderCreatedResponseDto, AppError>> {
+    const quantity = input.quantity ?? 1;
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      return err({
+        code: 'VALIDATION_ERROR',
+        message: 'Quantity must be a positive integer.',
+      });
+    }
+
     const productResult = await this.productRepository.findById(
       input.productId,
     );
@@ -71,14 +80,15 @@ export class CreateOrderUseCase {
     }
     const product = (productOrNotFound as Ok<Product>).value;
 
-    if (product.stock <= 0) {
+    if (product.stock < quantity) {
       return err({
         code: 'OUT_OF_STOCK',
-        message: `Product ${product.id} is out of stock.`,
+        message: `Product ${product.id} does not have enough stock for quantity ${quantity}.`,
       });
     }
 
-    const moneyResult = Money.create(product.priceInCents, product.currency);
+    const totalAmountInCents = product.priceInCents * quantity;
+    const moneyResult = Money.create(totalAmountInCents, product.currency);
     if (moneyResult.isErr()) {
       return moneyResult;
     }
@@ -107,6 +117,7 @@ export class CreateOrderUseCase {
 
     const orderResult = await this.orderRepository.createPending({
       productId: product.id,
+      quantity,
       amountInCents: money.amountInCents,
       currency: money.currency,
       wompiTransactionId: payment.transactionId,

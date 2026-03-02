@@ -20,6 +20,7 @@ describe('CreateOrderUseCase', () => {
   const baseOrder = {
     id: '97fb06c8-0df9-42a5-9534-732f54a08c72',
     productId: baseProduct.id,
+    quantity: 1,
     amountInCents: 15000,
     currency: 'COP',
     wompiTransactionId: 'wompi_tx_123',
@@ -139,6 +140,7 @@ describe('CreateOrderUseCase', () => {
     });
     expect(orderRepository.createPending).toHaveBeenCalledWith({
       productId: baseProduct.id,
+      quantity: 1,
       amountInCents: baseProduct.priceInCents,
       currency: baseProduct.currency,
       wompiTransactionId: baseOrder.wompiTransactionId,
@@ -305,6 +307,62 @@ describe('CreateOrderUseCase', () => {
         type: 'NEQUI',
         phoneNumber: '3991111111',
       },
+    });
+  });
+
+  it('creates order with selected quantity and total amount', async () => {
+    const {
+      useCase,
+      productRepository,
+      orderRepository,
+      paymentGateway,
+      pollingService,
+    } = createMocks();
+
+    productRepository.findById.mockResolvedValue(ok(baseProduct));
+    paymentGateway.createTransaction.mockResolvedValue(
+      ok({
+        transactionId: baseOrder.wompiTransactionId,
+        checkoutUrl: null,
+        providerStatus: 'PENDING',
+      }),
+    );
+    orderRepository.createPending.mockResolvedValue(
+      ok({
+        ...baseOrder,
+        quantity: 3,
+        amountInCents: baseProduct.priceInCents * 3,
+      }),
+    );
+    pollingService.start.mockResolvedValue(ok(undefined));
+
+    const result = await useCase.execute({
+      productId: baseProduct.id,
+      quantity: 3,
+      customerEmail,
+      paymentMethodData: {
+        cardToken: 'tok_test_card_123',
+      },
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(paymentGateway.createTransaction).toHaveBeenCalledWith({
+      orderReference: expect.any(String),
+      amountInCents: baseProduct.priceInCents * 3,
+      currency: baseProduct.currency,
+      customerEmail,
+      paymentMethod: {
+        type: 'CARD',
+        cardToken: 'tok_test_card_123',
+        installments: 1,
+      },
+    });
+    expect(orderRepository.createPending).toHaveBeenCalledWith({
+      productId: baseProduct.id,
+      quantity: 3,
+      amountInCents: baseProduct.priceInCents * 3,
+      currency: baseProduct.currency,
+      wompiTransactionId: baseOrder.wompiTransactionId,
     });
   });
 });

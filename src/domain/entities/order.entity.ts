@@ -15,6 +15,7 @@ export interface ShippingData {
 export interface Order {
   id: string;
   productId: string;
+  quantity: number;
   amountInCents: number;
   currency: string;
   wompiTransactionId: string;

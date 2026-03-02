@@ -57,6 +57,7 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
   ): Promise<Result<Order, AppError>> {
     const order = buildOrder({
       productId: input.productId,
+      quantity: input.quantity,
       amountInCents: input.amountInCents,
       currency: input.currency,
       wompiTransactionId: input.wompiTransactionId,

@@ -95,6 +95,7 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
   type: 'object',
   properties: {
     productId: { type: 'string', format: 'uuid' },
+    quantity: { type: 'integer', minimum: 1, default: 1, example: 2 },
     customerEmail: {
       type: 'string',
       format: 'email',
@@ -133,6 +134,7 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
   properties: {
     id: { type: 'string', format: 'uuid' },
     product_id: { type: 'string', format: 'uuid' },
+    quantity: { type: 'integer', example: 2 },
     amount_in_cents: { type: 'integer', example: 12900 },
     currency: { type: 'string', example: 'COP' },
     wompi_transaction_id: { type: 'string', example: '12345-1718123303-80111' },
@@ -145,6 +147,7 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
   required: [
     'id',
     'product_id',
+    'quantity',
     'amount_in_cents',
     'currency',
     'wompi_transaction_id',

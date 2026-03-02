@@ -6,6 +6,7 @@ describe('GetOrderByIdUseCase', () => {
   const order = {
     id: 'o1',
     productId: 'p1',
+    quantity: 1,
     amountInCents: 1000,
     currency: 'COP',
     wompiTransactionId: 'tx1',

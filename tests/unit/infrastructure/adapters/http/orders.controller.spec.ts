@@ -57,6 +57,7 @@ describe('OrdersController', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 2,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
@@ -71,9 +72,11 @@ describe('OrdersController', () => {
     expect(response).toEqual({
       id: 'o1',
       product_id: 'p1',
+      quantity: 2,
       amount_in_cents: 1000,
       currency: 'COP',
       wompi_transaction_id: 'tx1',
+      shipping_data: null,
       status: 'PENDING',
       created_at: new Date('2026-01-01T00:00:00.000Z'),
     });

@@ -85,6 +85,12 @@ export class CreateOrderRequestDto {
   @IsUUID()
   public productId!: string;
 
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  public quantity?: number;
+
   @IsEmail()
   public customerEmail!: string;
 

@@ -6,6 +6,7 @@ export const ORDER_REPOSITORY_PORT = Symbol('ORDER_REPOSITORY_PORT');
 
 export interface CreatePendingOrderInput {
   productId: string;
+  quantity: number;
   amountInCents: number;
   currency: string;
   wompiTransactionId: string;

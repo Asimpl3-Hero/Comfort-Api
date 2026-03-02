@@ -160,7 +160,7 @@ export class WompiOrderStatusPollingService
             if (updatedOrder) {
               const stockResult = await this.productRepository.decrementStock(
                 updatedOrder.productId,
-                1,
+                updatedOrder.quantity,
               );
 
               if (stockResult.isErr()) {

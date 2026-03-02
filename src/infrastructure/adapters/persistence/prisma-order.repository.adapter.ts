@@ -19,6 +19,7 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
       const order = await this.prisma.order.create({
         data: {
           productId: input.productId,
+          quantity: input.quantity,
           amountInCents: input.amountInCents,
           currency: input.currency,
           wompiTransactionId: input.wompiTransactionId,
@@ -32,7 +33,7 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
           shippingZip: input.shippingData?.zip,
           shippingCountry: input.shippingData?.country,
           status: 'PENDING',
-        },
+        } as any,
       });
 
       return ok(this.toDomain(order));
@@ -109,6 +110,7 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
   private toDomain(order: {
     id: string;
     productId: string;
+    quantity?: number | null;
     amountInCents: number;
     currency: string;
     wompiTransactionId: string;
@@ -135,6 +137,10 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
     return {
       id: order.id,
       productId: order.productId,
+      quantity:
+        typeof order.quantity === 'number' && order.quantity > 0
+          ? order.quantity
+          : 1,
       amountInCents: order.amountInCents,
       currency: order.currency,
       wompiTransactionId: order.wompiTransactionId,

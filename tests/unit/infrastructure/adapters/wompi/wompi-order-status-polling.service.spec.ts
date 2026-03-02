@@ -44,6 +44,7 @@ describe('WompiOrderStatusPollingService', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 2,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
@@ -63,7 +64,7 @@ describe('WompiOrderStatusPollingService', () => {
     await jest.advanceTimersByTimeAsync(5000);
 
     expect(orderRepository.updateStatus).toHaveBeenCalledWith('o1', 'APPROVED');
-    expect(productRepository.decrementStock).toHaveBeenCalledWith('p1', 1);
+    expect(productRepository.decrementStock).toHaveBeenCalledWith('p1', 2);
   });
 
   it('marks order as DECLINED when timeout is reached', async () => {
@@ -77,6 +78,7 @@ describe('WompiOrderStatusPollingService', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 1,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
@@ -108,6 +110,7 @@ describe('WompiOrderStatusPollingService', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 1,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
@@ -144,6 +147,7 @@ describe('WompiOrderStatusPollingService', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 1,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
@@ -192,6 +196,7 @@ describe('WompiOrderStatusPollingService', () => {
         {
           id: 'o1',
           productId: 'p1',
+          quantity: 1,
           amountInCents: 1000,
           currency: 'COP',
           wompiTransactionId: 'tx1',
@@ -207,6 +212,7 @@ describe('WompiOrderStatusPollingService', () => {
       ok({
         id: 'o1',
         productId: 'p1',
+        quantity: 1,
         amountInCents: 1000,
         currency: 'COP',
         wompiTransactionId: 'tx1',
