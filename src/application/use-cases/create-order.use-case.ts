@@ -17,7 +17,7 @@ import type { Product } from '../../domain/entities/product.entity';
 import type { Order, ShippingData } from '../../domain/entities/order.entity';
 import { Money } from '../../domain/value-objects/money.vo';
 import { AppError } from '../../shared/errors/app-error';
-import { Ok, Result, err } from '../../shared/railway/result';
+import { Result, err } from '../../shared/railway/result';
 import { OrderCreatedResponseDto } from '../dto/order-created-response.dto';
 import {
   CreateOrderPaymentMethodData,
@@ -31,6 +31,33 @@ export interface CreateOrderInput {
   shippingData?: ShippingData;
   paymentMethodType?: PaymentMethodType;
   paymentMethodData?: CreateOrderPaymentMethodData;
+}
+
+interface CreateOrderContextBase {
+  input: CreateOrderInput;
+  quantity: number;
+}
+
+interface CreateOrderContextWithProduct extends CreateOrderContextBase {
+  product: Product;
+}
+
+interface CreateOrderContextWithMoney extends CreateOrderContextWithProduct {
+  money: Money;
+}
+
+interface CreateOrderContextWithPaymentMethod
+  extends CreateOrderContextWithMoney {
+  paymentMethod: PaymentMethodInput;
+}
+
+interface CreateOrderContextWithPayment
+  extends CreateOrderContextWithPaymentMethod {
+  payment: CreatedWompiTransaction;
+}
+
+interface CreateOrderContextWithOrder extends CreateOrderContextWithPayment {
+  order: Order;
 }
 
 @Injectable()
@@ -50,6 +77,45 @@ export class CreateOrderUseCase {
   public async execute(
     input: CreateOrderInput,
   ): Promise<Result<OrderCreatedResponseDto, AppError>> {
+    const initialContextResult = this.validateQuantity(input).map(
+      (quantity) => ({
+        input,
+        quantity,
+      }),
+    );
+
+    const withProductResult = await initialContextResult.asyncFlatMap((ctx) =>
+      this.loadProduct(ctx),
+    );
+
+    const withMoneyResult = withProductResult.flatMap((ctx) =>
+      this.ensureStockAndMoney(ctx),
+    );
+
+    const withPaymentMethodResult = withMoneyResult.flatMap((ctx) =>
+      this.resolvePaymentMethod(ctx),
+    );
+
+    const withPaymentResult = await withPaymentMethodResult.asyncFlatMap(
+      (ctx) => this.createPayment(ctx),
+    );
+
+    const withOrderResult = await withPaymentResult.asyncFlatMap((ctx) =>
+      this.createPendingOrder(ctx),
+    );
+
+    const startedPollingResult = await withOrderResult.asyncFlatMap((ctx) =>
+      this.startPolling(ctx),
+    );
+
+    return startedPollingResult.map((ctx) => ({
+      orderId: ctx.order.id,
+      checkoutUrl: ctx.payment.checkoutUrl,
+      status: ctx.order.status,
+    }));
+  }
+
+  private validateQuantity(input: CreateOrderInput): Result<number, AppError> {
     const quantity = input.quantity ?? 1;
     if (!Number.isInteger(quantity) || quantity <= 0) {
       return err({
@@ -58,88 +124,104 @@ export class CreateOrderUseCase {
       });
     }
 
-    const productResult = await this.productRepository.findById(
-      input.productId,
-    );
-    if (productResult.isErr()) {
-      return productResult;
-    }
+    return Result.ok(quantity);
+  }
 
-    const productOrNotFound = productResult.flatMap((product) => {
+  private async loadProduct(
+    ctx: CreateOrderContextBase,
+  ): Promise<Result<CreateOrderContextWithProduct, AppError>> {
+    const productResult = await this.productRepository.findById(
+      ctx.input.productId,
+    );
+
+    return productResult.flatMap((product) => {
       if (!product) {
         return err({
           code: 'PRODUCT_NOT_FOUND',
-          message: `Product ${input.productId} was not found.`,
+          message: `Product ${ctx.input.productId} was not found.`,
         });
       }
-      return Result.ok(product);
+
+      return Result.ok({
+        ...ctx,
+        product,
+      });
     });
+  }
 
-    if (productOrNotFound.isErr()) {
-      return productOrNotFound;
-    }
-    const product = (productOrNotFound as Ok<Product>).value;
-
-    if (product.stock < quantity) {
+  private ensureStockAndMoney(
+    ctx: CreateOrderContextWithProduct,
+  ): Result<CreateOrderContextWithMoney, AppError> {
+    if (ctx.product.stock < ctx.quantity) {
       return err({
         code: 'OUT_OF_STOCK',
-        message: `Product ${product.id} does not have enough stock for quantity ${quantity}.`,
+        message: `Product ${ctx.product.id} does not have enough stock for quantity ${ctx.quantity}.`,
       });
     }
 
-    const totalAmountInCents = product.priceInCents * quantity;
-    const moneyResult = Money.create(totalAmountInCents, product.currency);
-    if (moneyResult.isErr()) {
-      return moneyResult;
-    }
-    const money = (moneyResult as Ok<Money>).value;
+    return Money.create(
+      ctx.product.priceInCents * ctx.quantity,
+      ctx.product.currency,
+    ).map((money) => ({
+      ...ctx,
+      money,
+    }));
+  }
 
-    const paymentMethodResult = this.paymentMethodResolver.resolve(
-      input.paymentMethodType,
-      input.paymentMethodData,
-    );
-    if (paymentMethodResult.isErr()) {
-      return paymentMethodResult;
-    }
-    const paymentMethod = (paymentMethodResult as Ok<PaymentMethodInput>).value;
+  private resolvePaymentMethod(
+    ctx: CreateOrderContextWithMoney,
+  ): Result<CreateOrderContextWithPaymentMethod, AppError> {
+    return this.paymentMethodResolver
+      .resolve(ctx.input.paymentMethodType, ctx.input.paymentMethodData)
+      .map((paymentMethod) => ({
+        ...ctx,
+        paymentMethod,
+      }));
+  }
 
+  private async createPayment(
+    ctx: CreateOrderContextWithPaymentMethod,
+  ): Promise<Result<CreateOrderContextWithPayment, AppError>> {
     const paymentResult = await this.paymentGateway.createTransaction({
       orderReference: randomUUID(),
-      amountInCents: money.amountInCents,
-      currency: money.currency,
-      customerEmail: input.customerEmail,
-      paymentMethod,
+      amountInCents: ctx.money.amountInCents,
+      currency: ctx.money.currency,
+      customerEmail: ctx.input.customerEmail,
+      paymentMethod: ctx.paymentMethod,
     });
-    if (paymentResult.isErr()) {
-      return paymentResult;
-    }
-    const payment = (paymentResult as Ok<CreatedWompiTransaction>).value;
 
+    return paymentResult.map((payment) => ({
+      ...ctx,
+      payment,
+    }));
+  }
+
+  private async createPendingOrder(
+    ctx: CreateOrderContextWithPayment,
+  ): Promise<Result<CreateOrderContextWithOrder, AppError>> {
     const orderResult = await this.orderRepository.createPending({
-      productId: product.id,
-      quantity,
-      amountInCents: money.amountInCents,
-      currency: money.currency,
-      wompiTransactionId: payment.transactionId,
-      shippingData: input.shippingData,
+      productId: ctx.product.id,
+      quantity: ctx.quantity,
+      amountInCents: ctx.money.amountInCents,
+      currency: ctx.money.currency,
+      wompiTransactionId: ctx.payment.transactionId,
+      shippingData: ctx.input.shippingData,
     });
-    if (orderResult.isErr()) {
-      return orderResult;
-    }
-    const order = (orderResult as Ok<Order>).value;
 
+    return orderResult.map((order) => ({
+      ...ctx,
+      order,
+    }));
+  }
+
+  private async startPolling(
+    ctx: CreateOrderContextWithOrder,
+  ): Promise<Result<CreateOrderContextWithOrder, AppError>> {
     const pollingResult = await this.pollingService.start(
-      order.id,
-      payment.transactionId,
+      ctx.order.id,
+      ctx.payment.transactionId,
     );
-    if (pollingResult.isErr()) {
-      return pollingResult;
-    }
 
-    return Result.ok({
-      orderId: order.id,
-      checkoutUrl: payment.checkoutUrl,
-      status: order.status,
-    });
+    return pollingResult.map(() => ctx);
   }
 }

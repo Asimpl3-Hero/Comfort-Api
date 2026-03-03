@@ -13,6 +13,14 @@ export abstract class Result<T, E> {
 
   public abstract flatMap<U>(fn: (value: T) => Result<U, E>): Result<U, E>;
 
+  public abstract asyncMap<U>(
+    fn: (value: T) => Promise<U>,
+  ): Promise<Result<U, E>>;
+
+  public abstract asyncFlatMap<U>(
+    fn: (value: T) => Promise<Result<U, E>>,
+  ): Promise<Result<U, E>>;
+
   public abstract match<R>(onOk: (value: T) => R, onErr: (error: E) => R): R;
 
   public isOk(): this is Ok<T> {
@@ -39,6 +47,18 @@ export class Ok<T> extends Result<T, never> {
     return fn(this.value);
   }
 
+  public async asyncMap<U>(
+    fn: (value: T) => Promise<U>,
+  ): Promise<Result<U, never>> {
+    return new Ok(await fn(this.value));
+  }
+
+  public async asyncFlatMap<U>(
+    fn: (value: T) => Promise<Result<U, never>>,
+  ): Promise<Result<U, never>> {
+    return fn(this.value);
+  }
+
   public match<R>(onOk: (value: T) => R, _onErr: (error: never) => R): R {
     return onOk(this.value);
   }
@@ -56,6 +76,18 @@ export class Err<E> extends Result<never, E> {
   }
 
   public flatMap<U>(_fn: (value: never) => Result<U, E>): Result<U, E> {
+    return new Err(this.error);
+  }
+
+  public async asyncMap<U>(
+    _fn: (value: never) => Promise<U>,
+  ): Promise<Result<U, E>> {
+    return new Err(this.error);
+  }
+
+  public async asyncFlatMap<U>(
+    _fn: (value: never) => Promise<Result<U, E>>,
+  ): Promise<Result<U, E>> {
     return new Err(this.error);
   }
 
