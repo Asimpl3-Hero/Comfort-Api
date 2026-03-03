@@ -162,6 +162,27 @@ describe('WompiOrderStatusPollingService', () => {
     expect(orderRepository.updateStatus).toHaveBeenCalledWith('o1', 'APPROVED');
   });
 
+  it('stops polling after 5 failed retries', async () => {
+    const orderRepository = buildOrderRepository();
+    const paymentGateway = buildPaymentGateway();
+    const productRepository = buildProductRepository();
+    paymentGateway.getTransactionStatus.mockResolvedValue(
+      err({ code: 'PAYMENT_PROVIDER_ERROR', message: 'temporary error' }),
+    );
+
+    const service = new WompiOrderStatusPollingService(
+      orderRepository,
+      productRepository,
+      paymentGateway,
+    );
+    await service.start('o1', 'tx1');
+
+    await jest.advanceTimersByTimeAsync(70000);
+
+    expect(paymentGateway.getTransactionStatus).toHaveBeenCalledTimes(5);
+    expect(orderRepository.updateStatus).not.toHaveBeenCalled();
+  });
+
   it('handles pending-order rehydration failure gracefully', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();

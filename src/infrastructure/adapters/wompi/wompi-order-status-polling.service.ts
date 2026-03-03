@@ -19,6 +19,7 @@ import { Ok, Result, err, ok } from '../../../shared/railway/result';
 const POLLING_BASE_INTERVAL_MS = 5000;
 const POLLING_MAX_BACKOFF_MS = 15000;
 const POLLING_TIMEOUT_MS = 60000;
+const POLLING_MAX_FAILURE_RETRIES = 5;
 
 interface PollerState {
   timer: NodeJS.Timeout;
@@ -128,6 +129,13 @@ export class WompiOrderStatusPollingService
             (error) => error,
           );
           const consecutiveFailures = this.bumpFailureCount(orderId);
+          if (consecutiveFailures >= POLLING_MAX_FAILURE_RETRIES) {
+            this.logger.warn(
+              `Polling Wompi transaction ${wompiTransactionId} failed for order ${orderId}. retriesExhausted=${consecutiveFailures} maxRetries=${POLLING_MAX_FAILURE_RETRIES} error=${this.formatAppError(appError)}`,
+            );
+            this.stop(orderId);
+            return;
+          }
           const retryDelayMs =
             this.computeRetryDelayMs(consecutiveFailures);
           this.logger.warn(
@@ -193,6 +201,14 @@ export class WompiOrderStatusPollingService
         );
       } catch (cause) {
         const consecutiveFailures = this.bumpFailureCount(orderId);
+        if (consecutiveFailures >= POLLING_MAX_FAILURE_RETRIES) {
+          this.logger.error(
+            `Unexpected polling error for order ${orderId}. retriesExhausted=${consecutiveFailures} maxRetries=${POLLING_MAX_FAILURE_RETRIES}`,
+            cause instanceof Error ? cause.stack : undefined,
+          );
+          this.stop(orderId);
+          return;
+        }
         const retryDelayMs = this.computeRetryDelayMs(consecutiveFailures);
         this.logger.error(
           `Unexpected polling error for order ${orderId}. retryInMs=${retryDelayMs}`,
