@@ -67,26 +67,13 @@ describe('WompiOrderStatusPollingService', () => {
     expect(productRepository.decrementStock).toHaveBeenCalledWith('p1', 2);
   });
 
-  it('marks order as DECLINED when timeout is reached', async () => {
+  it('stops polling after timeout without forcing DECLINED', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
     const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus.mockResolvedValue(
       ok({ providerStatus: 'PENDING', orderStatus: 'PENDING' }),
     );
-    orderRepository.updateStatus.mockResolvedValue(
-      ok({
-        id: 'o1',
-        productId: 'p1',
-        quantity: 1,
-        amountInCents: 1000,
-        currency: 'COP',
-        wompiTransactionId: 'tx1',
-        status: 'DECLINED',
-        createdAt: new Date(),
-      }),
-    );
-
     const service = new WompiOrderStatusPollingService(
       orderRepository,
       productRepository,
@@ -96,7 +83,7 @@ describe('WompiOrderStatusPollingService', () => {
 
     await jest.advanceTimersByTimeAsync(60000);
 
-    expect(orderRepository.updateStatus).toHaveBeenCalledWith('o1', 'DECLINED');
+    expect(orderRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it('does not duplicate pollers for the same order id', async () => {
@@ -132,13 +119,16 @@ describe('WompiOrderStatusPollingService', () => {
     expect(paymentGateway.getTransactionStatus).toHaveBeenCalledTimes(1);
   });
 
-  it('retries polling when gateway status check fails', async () => {
+  it('retries polling with backoff when gateway status check fails', async () => {
     const orderRepository = buildOrderRepository();
     const paymentGateway = buildPaymentGateway();
     const productRepository = buildProductRepository();
     paymentGateway.getTransactionStatus
       .mockResolvedValueOnce(
         err({ code: 'PAYMENT_PROVIDER_ERROR', message: 'temporary error' }),
+      )
+      .mockResolvedValueOnce(
+        err({ code: 'PAYMENT_PROVIDER_ERROR', message: 'temporary error 2' }),
       )
       .mockResolvedValueOnce(
         ok({ providerStatus: 'APPROVED', orderStatus: 'APPROVED' }),
@@ -163,9 +153,12 @@ describe('WompiOrderStatusPollingService', () => {
     );
     await service.start('o1', 'tx1');
 
-    await jest.advanceTimersByTimeAsync(10000);
-
+    await jest.advanceTimersByTimeAsync(15000);
     expect(paymentGateway.getTransactionStatus).toHaveBeenCalledTimes(2);
+    expect(orderRepository.updateStatus).not.toHaveBeenCalled();
+
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(paymentGateway.getTransactionStatus).toHaveBeenCalledTimes(3);
     expect(orderRepository.updateStatus).toHaveBeenCalledWith('o1', 'APPROVED');
   });
 

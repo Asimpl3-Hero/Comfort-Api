@@ -6,8 +6,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-comfort_api}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    ports:
-      - '${DB_HOST_PORT:-5432}:5432'
+    expose:
+      - '5432'
     volumes:
       - comfort_api_pgdata:/var/lib/postgresql/data
     healthcheck:

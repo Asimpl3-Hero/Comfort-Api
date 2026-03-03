@@ -16,15 +16,21 @@ import type { OrderStatusPollingPort } from '../../../domain/ports/order-status-
 import { AppError } from '../../../shared/errors/app-error';
 import { Ok, Result, err, ok } from '../../../shared/railway/result';
 
-const POLLING_INTERVAL_MS = 5000;
+const POLLING_BASE_INTERVAL_MS = 5000;
+const POLLING_MAX_BACKOFF_MS = 15000;
 const POLLING_TIMEOUT_MS = 60000;
+
+interface PollerState {
+  timer: NodeJS.Timeout;
+  consecutiveFailures: number;
+}
 
 @Injectable()
 export class WompiOrderStatusPollingService
   implements OrderStatusPollingPort, OnModuleDestroy, OnModuleInit
 {
   private readonly logger = new Logger(WompiOrderStatusPollingService.name);
-  private readonly activePollers = new Map<string, NodeJS.Timeout>();
+  private readonly activePollers = new Map<string, PollerState>();
 
   constructor(
     @Inject(ORDER_REPOSITORY_PORT)
@@ -67,8 +73,8 @@ export class WompiOrderStatusPollingService
   }
 
   public onModuleDestroy(): void {
-    for (const timer of this.activePollers.values()) {
-      clearTimeout(timer);
+    for (const state of this.activePollers.values()) {
+      clearTimeout(state.timer);
     }
 
     this.activePollers.clear();
@@ -99,6 +105,7 @@ export class WompiOrderStatusPollingService
     orderId: string,
     wompiTransactionId: string,
     startedAt: number,
+    delayMs = POLLING_BASE_INTERVAL_MS,
   ): void {
     const timer = setTimeout(async () => {
       try {
@@ -106,17 +113,9 @@ export class WompiOrderStatusPollingService
 
         if (elapsed >= POLLING_TIMEOUT_MS) {
           this.stop(orderId);
-          const timeoutUpdateResult = await this.orderRepository.updateStatus(
-            orderId,
-            'DECLINED',
+          this.logger.warn(
+            `Polling timeout reached for order ${orderId} after ${elapsed}ms. Keeping status as PENDING.`,
           );
-
-          if (timeoutUpdateResult.isErr()) {
-            this.logger.error(
-              `Failed to set order ${orderId} as DECLINED after polling timeout.`,
-            );
-          }
-
           return;
         }
 
@@ -124,12 +123,25 @@ export class WompiOrderStatusPollingService
           await this.paymentGateway.getTransactionStatus(wompiTransactionId);
 
         if (transactionStatusResult.isErr()) {
-          this.logger.warn(
-            `Polling Wompi transaction ${wompiTransactionId} failed for order ${orderId}.`,
+          const appError = transactionStatusResult.match(
+            () => null,
+            (error) => error,
           );
-          this.scheduleNextPoll(orderId, wompiTransactionId, startedAt);
+          const consecutiveFailures = this.bumpFailureCount(orderId);
+          const retryDelayMs =
+            this.computeRetryDelayMs(consecutiveFailures);
+          this.logger.warn(
+            `Polling Wompi transaction ${wompiTransactionId} failed for order ${orderId}. retryInMs=${retryDelayMs} error=${this.formatAppError(appError)}`,
+          );
+          this.scheduleNextPoll(
+            orderId,
+            wompiTransactionId,
+            startedAt,
+            retryDelayMs,
+          );
           return;
         }
+        this.resetFailureCount(orderId);
         const transactionStatus = (
           transactionStatusResult as Ok<WompiTransactionStatus>
         ).value;
@@ -173,26 +185,101 @@ export class WompiOrderStatusPollingService
           return;
         }
 
-        this.scheduleNextPoll(orderId, wompiTransactionId, startedAt);
+        this.scheduleNextPoll(
+          orderId,
+          wompiTransactionId,
+          startedAt,
+          POLLING_BASE_INTERVAL_MS,
+        );
       } catch (cause) {
+        const consecutiveFailures = this.bumpFailureCount(orderId);
+        const retryDelayMs = this.computeRetryDelayMs(consecutiveFailures);
         this.logger.error(
-          `Unexpected polling error for order ${orderId}.`,
+          `Unexpected polling error for order ${orderId}. retryInMs=${retryDelayMs}`,
           cause instanceof Error ? cause.stack : undefined,
         );
-        this.scheduleNextPoll(orderId, wompiTransactionId, startedAt);
+        this.scheduleNextPoll(
+          orderId,
+          wompiTransactionId,
+          startedAt,
+          retryDelayMs,
+        );
       }
-    }, POLLING_INTERVAL_MS);
+    }, delayMs);
 
-    this.activePollers.set(orderId, timer);
+    this.setPollerState(orderId, timer);
   }
 
   private stop(orderId: string): void {
-    const timer = this.activePollers.get(orderId);
-    if (!timer) {
+    const state = this.activePollers.get(orderId);
+    if (!state) {
       return;
     }
 
-    clearTimeout(timer);
+    clearTimeout(state.timer);
     this.activePollers.delete(orderId);
+  }
+
+  private setPollerState(orderId: string, timer: NodeJS.Timeout): void {
+    const previousState = this.activePollers.get(orderId);
+    this.activePollers.set(orderId, {
+      timer,
+      consecutiveFailures: previousState?.consecutiveFailures ?? 0,
+    });
+  }
+
+  private bumpFailureCount(orderId: string): number {
+    const state = this.activePollers.get(orderId);
+    if (!state) {
+      return 1;
+    }
+
+    const consecutiveFailures = state.consecutiveFailures + 1;
+    this.activePollers.set(orderId, {
+      ...state,
+      consecutiveFailures,
+    });
+    return consecutiveFailures;
+  }
+
+  private resetFailureCount(orderId: string): void {
+    const state = this.activePollers.get(orderId);
+    if (!state || state.consecutiveFailures === 0) {
+      return;
+    }
+
+    this.activePollers.set(orderId, {
+      ...state,
+      consecutiveFailures: 0,
+    });
+  }
+
+  private computeRetryDelayMs(consecutiveFailures: number): number {
+    const exponent = Math.max(0, consecutiveFailures - 1);
+    return Math.min(
+      POLLING_BASE_INTERVAL_MS * 2 ** exponent,
+      POLLING_MAX_BACKOFF_MS,
+    );
+  }
+
+  private formatAppError(error: AppError | null): string {
+    if (!error) {
+      return 'unknown';
+    }
+
+    const details =
+      error.details === undefined
+        ? ''
+        : ` details=${this.safeStringify(error.details)}`;
+
+    return `code=${error.code} message="${error.message}"${details}`;
+  }
+
+  private safeStringify(value: unknown): string {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
 }
