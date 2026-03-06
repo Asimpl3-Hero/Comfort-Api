@@ -63,12 +63,6 @@ Usa `.env.example` como base:
 cp .env.example .env
 ```
 
-Variables clave:
-
-- DB: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`
-- API: `PORT`, `HOST_PORT`, `CORS_ORIGINS`, `FORCE_HTTPS`
-- Pasarela de pago: `WOMPI_BASE_URL`, `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_INTEGRITY_SECRET`, `WOMPI_ACCEPTANCE_TOKEN`
-
 ## 🚀 Levantar backend (local)
 
 ```bash
