@@ -27,7 +27,7 @@ model Order {
   quantity           Int         @default(1)
   amountInCents      Int         @map("amount_in_cents")
   currency           String
-  customerEmail      String      @map("customer_email")
+  customerEmail      String?     @map("customer_email")
   wompiTransactionId String      @map("wompi_transaction_id")
   shippingFullName   String?     @map("shipping_full_name")
   shippingEmail      String?     @map("shipping_email")

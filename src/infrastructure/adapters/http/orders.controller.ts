@@ -128,7 +128,7 @@ export class OrdersController {
         quantity: order.quantity,
         amount_in_cents: order.amountInCents,
         currency: order.currency,
-        customer_email: order.customerEmail,
+        customer_email: order.customerEmail ?? null,
         wompi_transaction_id: order.wompiTransactionId,
         shipping_data: order.shippingData ?? null,
         status: order.status,

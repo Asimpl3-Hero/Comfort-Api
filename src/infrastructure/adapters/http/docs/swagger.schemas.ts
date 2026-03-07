@@ -138,9 +138,10 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
     amount_in_cents: { type: 'integer', example: 12900 },
     currency: { type: 'string', example: 'COP' },
     customer_email: {
-      type: 'string',
-      format: 'email',
-      example: 'buyer@example.com',
+      oneOf: [
+        { type: 'string', format: 'email', example: 'buyer@example.com' },
+        { type: 'null' },
+      ],
     },
     wompi_transaction_id: { type: 'string', example: '12345-1718123303-80111' },
     shipping_data: {

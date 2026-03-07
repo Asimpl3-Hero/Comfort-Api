@@ -218,7 +218,7 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
     quantity?: number | null;
     amountInCents: number;
     currency: string;
-    customerEmail: string;
+    customerEmail: string | null;
     wompiTransactionId: string;
     shippingFullName: string | null;
     shippingEmail: string | null;
@@ -249,7 +249,9 @@ export class PrismaOrderRepositoryAdapter implements OrderRepositoryPort {
           : 1,
       amountInCents: order.amountInCents,
       currency: order.currency,
-      customerEmail: order.customerEmail,
+      customerEmail:
+        order.customerEmail ??
+        (hasShippingData ? (order.shippingEmail as string) : undefined),
       wompiTransactionId: order.wompiTransactionId,
       shippingData: hasShippingData
         ? {
