@@ -28,11 +28,12 @@ export class WompiAcceptanceTokenService {
       return ok(configuredToken);
     }
 
-    const merchantResponse = await this.wompiHttpClient.request<WompiMerchantResponse>(
-      `/merchants/${this.appConfigService.wompiPublicKey}`,
-      { method: 'GET' },
-      'none',
-    );
+    const merchantResponse =
+      await this.wompiHttpClient.request<WompiMerchantResponse>(
+        `/merchants/${this.appConfigService.wompiPublicKey}`,
+        { method: 'GET' },
+        'none',
+      );
     if (merchantResponse.isErr()) {
       return merchantResponse;
     }

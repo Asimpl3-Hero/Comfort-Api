@@ -3,11 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { CreateOrderUseCase } from './application/use-cases/create-order.use-case';
 import { GetOrderByIdUseCase } from './application/use-cases/get-order-by-id.use-case';
 import { GetProductsUseCase } from './application/use-cases/get-products.use-case';
+import { GetCustomerOrdersUseCase } from './application/use-cases/get-customer-orders.use-case';
+import { GetDeliveryByOrderIdUseCase } from './application/use-cases/get-delivery-by-order-id.use-case';
 import { CreateOrderPaymentMethodResolver } from './application/services/create-order-payment-method.resolver';
 import { OrderStatusService } from './domain/services/order-status.service';
 import { ProductsController } from './infrastructure/adapters/http/products.controller';
 import { OrdersController } from './infrastructure/adapters/http/orders.controller';
 import { HealthController } from './infrastructure/adapters/http/health.controller';
+import { CustomersController } from './infrastructure/adapters/http/customers.controller';
+import { DeliveriesController } from './infrastructure/adapters/http/deliveries.controller';
 import { PrismaOrderRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-order.repository.adapter';
 import { PrismaProductRepositoryAdapter } from './infrastructure/adapters/persistence/prisma-product.repository.adapter';
 import { PrismaService } from './infrastructure/adapters/persistence/prisma.service';
@@ -29,7 +33,13 @@ import { ORDER_STATUS_POLLING_PORT } from './domain/ports/order-status-polling.p
       isGlobal: true,
     }),
   ],
-  controllers: [ProductsController, OrdersController, HealthController],
+  controllers: [
+    ProductsController,
+    OrdersController,
+    CustomersController,
+    DeliveriesController,
+    HealthController,
+  ],
   providers: [
     AppConfigService,
     PrismaService,
@@ -41,6 +51,8 @@ import { ORDER_STATUS_POLLING_PORT } from './domain/ports/order-status-polling.p
     CreateOrderUseCase,
     GetProductsUseCase,
     GetOrderByIdUseCase,
+    GetCustomerOrdersUseCase,
+    GetDeliveryByOrderIdUseCase,
     {
       provide: PRODUCT_REPOSITORY_PORT,
       useClass: PrismaProductRepositoryAdapter,

@@ -28,6 +28,14 @@ describe('OrdersController', () => {
     const response = await controller.createOrder({
       productId: '4f3aef36-b1e6-4514-b0d5-1de4f5c8d548',
       customerEmail: 'buyer@example.com',
+      shippingData: {
+        fullName: 'Buyer Example',
+        email: 'buyer@example.com',
+        address1: 'Street 123',
+        city: 'Bogota',
+        state: 'Cundinamarca',
+        zip: '110111',
+      },
     });
 
     expect(response).toEqual({
@@ -48,6 +56,14 @@ describe('OrdersController', () => {
       controller.createOrder({
         productId: '4f3aef36-b1e6-4514-b0d5-1de4f5c8d548',
         customerEmail: 'buyer@example.com',
+        shippingData: {
+          fullName: 'Buyer Example',
+          email: 'buyer@example.com',
+          address1: 'Street 123',
+          city: 'Bogota',
+          state: 'Cundinamarca',
+          zip: '110111',
+        },
       }),
     ).rejects.toMatchObject({ status: 404 });
   });
@@ -60,6 +76,7 @@ describe('OrdersController', () => {
         quantity: 2,
         amountInCents: 1000,
         currency: 'COP',
+        customerEmail: 'buyer@example.com',
         wompiTransactionId: 'tx1',
         status: 'PENDING',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -75,6 +92,7 @@ describe('OrdersController', () => {
       quantity: 2,
       amount_in_cents: 1000,
       currency: 'COP',
+      customer_email: 'buyer@example.com',
       wompi_transaction_id: 'tx1',
       shipping_data: null,
       status: 'PENDING',

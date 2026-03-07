@@ -111,7 +111,7 @@ export const CREATE_ORDER_REQUEST_SCHEMA = {
     paymentMethodData: PAYMENT_METHOD_DATA_SCHEMA,
     shippingData: SHIPPING_DATA_SCHEMA,
   },
-  required: ['productId', 'customerEmail'],
+  required: ['productId', 'customerEmail', 'shippingData'],
   additionalProperties: false,
 };
 
@@ -137,6 +137,11 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
     quantity: { type: 'integer', example: 2 },
     amount_in_cents: { type: 'integer', example: 12900 },
     currency: { type: 'string', example: 'COP' },
+    customer_email: {
+      type: 'string',
+      format: 'email',
+      example: 'buyer@example.com',
+    },
     wompi_transaction_id: { type: 'string', example: '12345-1718123303-80111' },
     shipping_data: {
       oneOf: [SHIPPING_DATA_SCHEMA, { type: 'null' }],
@@ -150,10 +155,65 @@ export const ORDER_BY_ID_RESPONSE_SCHEMA = {
     'quantity',
     'amount_in_cents',
     'currency',
+    'customer_email',
     'wompi_transaction_id',
     'status',
     'created_at',
   ],
+};
+
+export const CUSTOMER_PROFILE_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    email: { type: 'string', format: 'email', example: 'buyer@example.com' },
+    full_name: { type: 'string', example: 'Juan Perez' },
+    phone: { type: 'string', example: '3001234567', nullable: true },
+    last_order_id: {
+      type: 'string',
+      format: 'uuid',
+      example: '97fb06c8-0df9-42a5-9534-732f54a08c72',
+    },
+    last_order_status: {
+      type: 'string',
+      enum: ['PENDING', 'APPROVED', 'DECLINED'],
+    },
+  },
+  required: ['email', 'full_name', 'last_order_id', 'last_order_status'],
+};
+
+export const CUSTOMER_ORDERS_RESPONSE_SCHEMA = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      product_id: { type: 'string', format: 'uuid' },
+      quantity: { type: 'integer', example: 1 },
+      amount_in_cents: { type: 'integer', example: 12900 },
+      currency: { type: 'string', example: 'COP' },
+      status: { type: 'string', enum: ['PENDING', 'APPROVED', 'DECLINED'] },
+      created_at: { type: 'string', format: 'date-time' },
+    },
+    required: [
+      'id',
+      'product_id',
+      'quantity',
+      'amount_in_cents',
+      'currency',
+      'status',
+      'created_at',
+    ],
+  },
+};
+
+export const DELIVERY_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    order_id: { type: 'string', format: 'uuid' },
+    status: { type: 'string', enum: ['PENDING', 'APPROVED', 'DECLINED'] },
+    shipping_data: SHIPPING_DATA_SCHEMA,
+  },
+  required: ['order_id', 'status', 'shipping_data'],
 };
 
 export const HEALTH_RESPONSE_SCHEMA = {

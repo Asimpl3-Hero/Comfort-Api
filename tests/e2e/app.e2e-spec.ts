@@ -24,7 +24,10 @@ describe('ProductsController (e2e)', () => {
   const orderRepositoryMock: jest.Mocked<OrderRepositoryPort> = {
     createPending: jest.fn(),
     findById: jest.fn(),
+    findByCustomerEmail: jest.fn(),
+    findDeliveryByOrderId: jest.fn(),
     findPending: jest.fn(),
+    approveOrderAndDecrementStock: jest.fn(),
     updateStatus: jest.fn(),
   };
   const paymentGatewayMock: jest.Mocked<PaymentGatewayPort> = {
@@ -111,7 +114,9 @@ describe('ProductsController (e2e)', () => {
   });
 
   it('/health (GET)', async () => {
-    const response = await request(app.getHttpServer()).get('/health').expect(200);
+    const response = await request(app.getHttpServer())
+      .get('/health')
+      .expect(200);
 
     expect(response.body).toEqual(
       expect.objectContaining({
@@ -135,6 +140,14 @@ describe('ProductsController (e2e)', () => {
       .send({
         productId: '53ca8c5d-8e2b-4740-aa07-f5d5f42d2554',
         customerEmail: 'buyer@example.com',
+        shippingData: {
+          fullName: 'Buyer Example',
+          email: 'buyer@example.com',
+          address1: 'Street 123',
+          city: 'Bogota',
+          state: 'Cundinamarca',
+          zip: '110111',
+        },
         paymentMethodType: 'CARD',
         paymentMethodData: {
           cardNumber: '4242424242424242',

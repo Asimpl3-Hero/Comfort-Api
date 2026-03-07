@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -109,7 +116,9 @@ export class OrdersController {
     description: 'Persistence or infrastructure error.',
     schema: APP_ERROR_SCHEMA,
   })
-  public async getOrderById(@Param('id') orderId: string) {
+  public async getOrderById(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) orderId: string,
+  ) {
     const result = await this.getOrderByIdUseCase.execute(orderId);
 
     return result.match(
@@ -119,6 +128,7 @@ export class OrdersController {
         quantity: order.quantity,
         amount_in_cents: order.amountInCents,
         currency: order.currency,
+        customer_email: order.customerEmail,
         wompi_transaction_id: order.wompiTransactionId,
         shipping_data: order.shippingData ?? null,
         status: order.status,

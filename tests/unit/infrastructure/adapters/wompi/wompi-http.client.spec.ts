@@ -43,7 +43,11 @@ describe('WompiHttpClient', () => {
       json: async () => ({ error: 'invalid' }),
     } as Response);
 
-    const result = await client.request('/transactions', { method: 'POST' }, 'private');
+    const result = await client.request(
+      '/transactions',
+      { method: 'POST' },
+      'private',
+    );
     const error = result.match(
       () => null,
       (errValue) => errValue,
@@ -57,7 +61,11 @@ describe('WompiHttpClient', () => {
     const client = new WompiHttpClient(config);
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network'));
 
-    const result = await client.request('/transactions', { method: 'GET' }, 'none');
+    const result = await client.request(
+      '/transactions',
+      { method: 'GET' },
+      'none',
+    );
     const error = result.match(
       () => null,
       (errValue) => errValue,

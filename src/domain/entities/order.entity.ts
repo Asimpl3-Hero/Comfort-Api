@@ -18,6 +18,7 @@ export interface Order {
   quantity: number;
   amountInCents: number;
   currency: string;
+  customerEmail: string;
   wompiTransactionId: string;
   shippingData?: ShippingData;
   status: OrderStatus;

@@ -34,4 +34,17 @@ describe('http-error.mapper', () => {
 
     expect(exception.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
   });
+
+  it('does not expose details for non-validation errors', () => {
+    const exception = toHttpException({
+      code: 'PERSISTENCE_ERROR',
+      message: 'db failed',
+      details: { sql: 'select * from secret_table' },
+    });
+
+    expect(exception.getResponse()).toEqual({
+      errorCode: 'PERSISTENCE_ERROR',
+      message: 'db failed',
+    });
+  });
 });

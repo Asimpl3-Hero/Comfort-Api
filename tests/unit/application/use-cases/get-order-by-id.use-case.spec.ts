@@ -9,6 +9,7 @@ describe('GetOrderByIdUseCase', () => {
     quantity: 1,
     amountInCents: 1000,
     currency: 'COP',
+    customerEmail: 'buyer@example.com',
     wompiTransactionId: 'tx1',
     status: 'PENDING' as const,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -17,7 +18,10 @@ describe('GetOrderByIdUseCase', () => {
   const buildRepo = (): jest.Mocked<OrderRepositoryPort> => ({
     createPending: jest.fn(),
     findById: jest.fn(),
+    findByCustomerEmail: jest.fn(),
+    findDeliveryByOrderId: jest.fn(),
     findPending: jest.fn(),
+    approveOrderAndDecrementStock: jest.fn(),
     updateStatus: jest.fn(),
   });
 

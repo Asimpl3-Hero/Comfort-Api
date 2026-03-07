@@ -10,6 +10,7 @@ import type { ProductRepositoryPort } from '../../../src/domain/ports/product-re
 import type { OrderStatusPollingPort } from '../../../src/domain/ports/order-status-polling.port';
 import type {
   Order,
+  ShippingData,
   OrderStatus,
 } from '../../../src/domain/entities/order.entity';
 import type { Product } from '../../../src/domain/entities/product.entity';
@@ -60,7 +61,9 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
       quantity: input.quantity,
       amountInCents: input.amountInCents,
       currency: input.currency,
+      customerEmail: input.customerEmail,
       wompiTransactionId: input.wompiTransactionId,
+      shippingData: input.shippingData,
       status: 'PENDING',
     });
 
@@ -70,6 +73,23 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 
   public async findById(id: string): Promise<Result<Order | null, AppError>> {
     return ok(this.orders.find((order) => order.id === id) ?? null);
+  }
+
+  public async findByCustomerEmail(
+    email: string,
+  ): Promise<Result<Order[], AppError>> {
+    return ok(
+      this.orders
+        .filter((order) => order.customerEmail === email)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+    );
+  }
+
+  public async findDeliveryByOrderId(
+    orderId: string,
+  ): Promise<Result<ShippingData | null, AppError>> {
+    const order = this.orders.find((item) => item.id === orderId) ?? null;
+    return ok(order?.shippingData ?? null);
   }
 
   public async findPending(): Promise<Result<Order[], AppError>> {
@@ -90,6 +110,12 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 
     order.status = status;
     return ok(order);
+  }
+
+  public async approveOrderAndDecrementStock(
+    id: string,
+  ): Promise<Result<Order, AppError>> {
+    return this.updateStatus(id, 'APPROVED');
   }
 
   public getAll(): Order[] {

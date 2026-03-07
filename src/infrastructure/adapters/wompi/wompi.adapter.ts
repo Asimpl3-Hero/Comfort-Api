@@ -52,7 +52,8 @@ export class WompiAdapter implements PaymentGatewayPort {
   public async createTransaction(
     input: CreateWompiTransactionInput,
   ): Promise<Result<CreatedWompiTransaction, AppError>> {
-    const acceptanceTokenResult = await this.wompiAcceptanceTokenService.resolve();
+    const acceptanceTokenResult =
+      await this.wompiAcceptanceTokenService.resolve();
     if (acceptanceTokenResult.isErr()) {
       return acceptanceTokenResult;
     }
@@ -119,7 +120,7 @@ export class WompiAdapter implements PaymentGatewayPort {
       const asyncUrlResult =
         await this.getBancolombiaAsyncPaymentUrl(transactionId);
       if (asyncUrlResult.isOk()) {
-        checkoutUrl = (asyncUrlResult as Ok<string | null>).value;
+        checkoutUrl = asyncUrlResult.value;
       }
     }
 
@@ -176,6 +177,8 @@ export class WompiAdapter implements PaymentGatewayPort {
 
     const responseData = (responseResult as Ok<WompiGetTransactionResponse>)
       .value;
-    return ok(responseData.data?.payment_method?.extra?.async_payment_url ?? null);
+    return ok(
+      responseData.data?.payment_method?.extra?.async_payment_url ?? null,
+    );
   }
 }

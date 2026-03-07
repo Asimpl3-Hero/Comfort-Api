@@ -7,8 +7,6 @@ import {
 } from '@nestjs/common';
 import { ORDER_REPOSITORY_PORT } from '../../../domain/ports/order-repository.port';
 import type { OrderRepositoryPort } from '../../../domain/ports/order-repository.port';
-import { PRODUCT_REPOSITORY_PORT } from '../../../domain/ports/product-repository.port';
-import type { ProductRepositoryPort } from '../../../domain/ports/product-repository.port';
 import { PAYMENT_GATEWAY_PORT } from '../../../domain/ports/payment-gateway.port';
 import type { PaymentGatewayPort } from '../../../domain/ports/payment-gateway.port';
 import type { WompiTransactionStatus } from '../../../domain/ports/payment-gateway.port';
@@ -36,8 +34,6 @@ export class WompiOrderStatusPollingService
   constructor(
     @Inject(ORDER_REPOSITORY_PORT)
     private readonly orderRepository: OrderRepositoryPort,
-    @Inject(PRODUCT_REPOSITORY_PORT)
-    private readonly productRepository: ProductRepositoryPort,
     @Inject(PAYMENT_GATEWAY_PORT)
     private readonly paymentGateway: PaymentGatewayPort,
   ) {}
@@ -136,8 +132,7 @@ export class WompiOrderStatusPollingService
             this.stop(orderId);
             return;
           }
-          const retryDelayMs =
-            this.computeRetryDelayMs(consecutiveFailures);
+          const retryDelayMs = this.computeRetryDelayMs(consecutiveFailures);
           this.logger.warn(
             `Polling Wompi transaction ${wompiTransactionId} failed for order ${orderId}. retryInMs=${retryDelayMs} error=${this.formatAppError(appError)}`,
           );
@@ -159,36 +154,18 @@ export class WompiOrderStatusPollingService
         if (orderStatus === 'APPROVED' || orderStatus === 'DECLINED') {
           this.stop(orderId);
 
-          const updateResult = await this.orderRepository.updateStatus(
-            orderId,
-            orderStatus,
-          );
+          const updateResult =
+            orderStatus === 'APPROVED'
+              ? await this.orderRepository.approveOrderAndDecrementStock(
+                  orderId,
+                )
+              : await this.orderRepository.updateStatus(orderId, orderStatus);
 
           if (updateResult.isErr()) {
             this.logger.error(
               `Failed to update order ${orderId} with status ${orderStatus}.`,
             );
             return;
-          }
-
-          if (orderStatus === 'APPROVED') {
-            const updatedOrder = updateResult.match(
-              (order) => order,
-              () => null,
-            );
-
-            if (updatedOrder) {
-              const stockResult = await this.productRepository.decrementStock(
-                updatedOrder.productId,
-                updatedOrder.quantity,
-              );
-
-              if (stockResult.isErr()) {
-                this.logger.error(
-                  `Failed to decrement stock for product ${updatedOrder.productId} after approving order ${orderId}.`,
-                );
-              }
-            }
           }
           return;
         }

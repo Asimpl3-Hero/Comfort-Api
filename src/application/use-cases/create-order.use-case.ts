@@ -28,7 +28,7 @@ export interface CreateOrderInput {
   productId: string;
   quantity?: number;
   customerEmail: string;
-  shippingData?: ShippingData;
+  shippingData: ShippingData;
   paymentMethodType?: PaymentMethodType;
   paymentMethodData?: CreateOrderPaymentMethodData;
 }
@@ -46,13 +46,11 @@ interface CreateOrderContextWithMoney extends CreateOrderContextWithProduct {
   money: Money;
 }
 
-interface CreateOrderContextWithPaymentMethod
-  extends CreateOrderContextWithMoney {
+interface CreateOrderContextWithPaymentMethod extends CreateOrderContextWithMoney {
   paymentMethod: PaymentMethodInput;
 }
 
-interface CreateOrderContextWithPayment
-  extends CreateOrderContextWithPaymentMethod {
+interface CreateOrderContextWithPayment extends CreateOrderContextWithPaymentMethod {
   payment: CreatedWompiTransaction;
 }
 
@@ -204,6 +202,7 @@ export class CreateOrderUseCase {
       quantity: ctx.quantity,
       amountInCents: ctx.money.amountInCents,
       currency: ctx.money.currency,
+      customerEmail: ctx.input.customerEmail,
       wompiTransactionId: ctx.payment.transactionId,
       shippingData: ctx.input.shippingData,
     });

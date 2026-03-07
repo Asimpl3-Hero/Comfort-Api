@@ -29,6 +29,14 @@ describe('Order Flow Integration', () => {
     const createResult = await createOrderUseCase.execute({
       productId: product.id,
       customerEmail: 'buyer@example.com',
+      shippingData: {
+        fullName: 'Buyer Example',
+        email: 'buyer@example.com',
+        address1: 'Street 123',
+        city: 'Bogota',
+        state: 'Cundinamarca',
+        zip: '110111',
+      },
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -73,6 +81,14 @@ describe('Order Flow Integration', () => {
     const result = await createOrderUseCase.execute({
       productId: 'missing-product',
       customerEmail: 'buyer@example.com',
+      shippingData: {
+        fullName: 'Buyer Example',
+        email: 'buyer@example.com',
+        address1: 'Street 123',
+        city: 'Bogota',
+        state: 'Cundinamarca',
+        zip: '110111',
+      },
     });
 
     expect(result.isErr()).toBe(true);

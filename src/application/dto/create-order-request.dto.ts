@@ -103,8 +103,7 @@ export class CreateOrderRequestDto {
   @Type(() => PaymentMethodDataDto)
   public paymentMethodData?: PaymentMethodDataDto;
 
-  @IsOptional()
   @ValidateNested()
   @Type(() => ShippingDataDto)
-  public shippingData?: ShippingDataDto;
+  public shippingData!: ShippingDataDto;
 }

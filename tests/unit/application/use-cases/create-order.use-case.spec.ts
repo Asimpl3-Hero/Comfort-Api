@@ -23,11 +23,32 @@ describe('CreateOrderUseCase', () => {
     quantity: 1,
     amountInCents: 15000,
     currency: 'COP',
+    customerEmail: 'buyer@example.com',
     wompiTransactionId: 'wompi_tx_123',
+    shippingData: {
+      fullName: 'Buyer Example',
+      email: 'buyer@example.com',
+      phone: '3001234567',
+      address1: 'Street 123',
+      city: 'Bogota',
+      state: 'Cundinamarca',
+      zip: '110111',
+      country: 'CO',
+    },
     status: 'PENDING' as const,
     createdAt: new Date('2026-01-01T00:01:00.000Z'),
   };
   const customerEmail = 'buyer@example.com';
+  const shippingData = {
+    fullName: 'Buyer Example',
+    email: 'buyer@example.com',
+    phone: '3001234567',
+    address1: 'Street 123',
+    city: 'Bogota',
+    state: 'Cundinamarca',
+    zip: '110111',
+    country: 'CO',
+  };
 
   const createMocks = () => {
     const productRepository: jest.Mocked<ProductRepositoryPort> = {
@@ -39,7 +60,10 @@ describe('CreateOrderUseCase', () => {
     const orderRepository: jest.Mocked<OrderRepositoryPort> = {
       createPending: jest.fn(),
       findById: jest.fn(),
+      findByCustomerEmail: jest.fn(),
+      findDeliveryByOrderId: jest.fn(),
       findPending: jest.fn(),
+      approveOrderAndDecrementStock: jest.fn(),
       updateStatus: jest.fn(),
     };
 
@@ -76,6 +100,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: '8f867a86-a89f-4b77-af96-8df287f4de59',
       customerEmail,
+      shippingData,
     });
 
     expect(result.isErr()).toBe(true);
@@ -111,6 +136,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -143,7 +169,9 @@ describe('CreateOrderUseCase', () => {
       quantity: 1,
       amountInCents: baseProduct.priceInCents,
       currency: baseProduct.currency,
+      customerEmail,
       wompiTransactionId: baseOrder.wompiTransactionId,
+      shippingData,
     });
     expect(pollingService.start).toHaveBeenCalledWith(
       baseOrder.id,
@@ -166,6 +194,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -188,6 +217,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
     });
 
     expect(result.isErr()).toBe(true);
@@ -207,6 +237,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
     });
 
     const error = result.match(
@@ -226,6 +257,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
       paymentMethodType: 'CARD',
       paymentMethodData: {},
     });
@@ -247,6 +279,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
       paymentMethodType: 'CARD',
       paymentMethodData: {
         cardNumber: '4242424242424242',
@@ -291,6 +324,7 @@ describe('CreateOrderUseCase', () => {
     const result = await useCase.execute({
       productId: baseProduct.id,
       customerEmail,
+      shippingData,
       paymentMethodType: 'NEQUI',
       paymentMethodData: {
         phoneNumber: '3991111111',
@@ -340,6 +374,7 @@ describe('CreateOrderUseCase', () => {
       productId: baseProduct.id,
       quantity: 3,
       customerEmail,
+      shippingData,
       paymentMethodData: {
         cardToken: 'tok_test_card_123',
       },
@@ -362,7 +397,9 @@ describe('CreateOrderUseCase', () => {
       quantity: 3,
       amountInCents: baseProduct.priceInCents * 3,
       currency: baseProduct.currency,
+      customerEmail,
       wompiTransactionId: baseOrder.wompiTransactionId,
+      shippingData,
     });
   });
 });

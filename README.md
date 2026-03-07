@@ -49,6 +49,9 @@ Seed: `prisma/seed.ts` (10 productos dummy).
 - `GET /products`
 - `POST /orders`
 - `GET /orders/:id`
+- `GET /customers/:email`
+- `GET /customers/:email/orders`
+- `GET /deliveries/:orderId`
 
 Swagger:
 
@@ -98,7 +101,7 @@ npm run test:cov
 
 Cobertura actual (Jest):
 
-- Statements: **94.71%**
-- Branches: **83.07%**
-- Functions: **95.45%**
-- Lines: **94.45%**
+- Statements: **92.60%**
+- Branches: **81.38%**
+- Functions: **92.46%**
+- Lines: **92.06%**
